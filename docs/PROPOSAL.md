@@ -2,80 +2,71 @@
 
 ## 1. Introduction
 
-Choosing what to cook every day is a repetitive and cognitively demanding task.  
-Many people search for meal inspiration on platforms such as Instagram, TikTok, and YouTube. However, recipes found there are often unstructured, missing information such as nutritional values or simply could not be modified.
+Daily meal selection is a repetitive and cognitively demanding task. Many people rely on platforms such as Instagram, TikTok, and YouTube for cooking inspiration. However, recipes shared on these platforms are often unstructured and incomplete. They lack standardized ingredient lists, portion sizes, nutritional information, and cost transparency. Moreover, they are not designed to support systematic meal planning, such as weekly scheduling, portion adjustment, or consolidated grocery list generation.
 
-Additionally, the overwhelming amount of content on social media makes it difficult for users to keep track of previously saved recipes. This information overload increases decision fatigue and reduces the likelihood of trying new meals.
+Additionally, the overwhelming volume of content on social media makes it difficult for users to track previously saved recipes. This information overload increases decision fatigue and reduces the likelihood of experimenting with new dishes.
 
-This application aims to simplify meal decision-making by providing a structured, searchable, and nutrition-aware recipe and meal planning platform.
+This project proposes a structured, searchable, and nutrition-aware platform designed to streamline recipe organization and meal planning.
 
 ---
 
 ## 2. Problem Statement
 
-Users who cook at home face the following challenges:
+People who cook at home, particularly students and busy individuals, face several recurring challenges:
 
-- Spending excessive time searching for meal ideas
-- Recipes lacking structured ingredient lists and steps
-- Missing calorie and nutrition information
-- Difficulty filtering recipes by available ingredients
-- Repetitive meal choices due to decision fatigue
-- Forgetting previously saved recipes due to content overload and poor organization
+- Excessive time spent searching for meal ideas leads to decision fatigue.
+- Social media recipes are unstructured, incomplete, and often lack standardized ingredient lists, portion sizes, and nutritional information.
+- Users rely on separate tools for recipes, nutrition tracking, meal planning, and shopping, resulting in fragmented workflows.
+- Difficulty filtering by available ingredients leads to food waste, duplicate purchases, and repetitive meal choices.
+- Previously saved recipes are often lost or poorly organized due to content overload.
 
-Existing applications typically focus on either recipe browsing, calorie tracking, or meal planning separately. Few combine all these features into one integrated system.
+Existing applications typically focus on isolated functions such as recipe browsing, calorie tracking, or meal planning. Few provide an integrated workflow that combines these capabilities into a single unified system.
 
 ---
 
 ## 3. Proposed Solution
 
-Smart meal planning application integrates recipe management, nutrition calculation, and weekly planning into one platform.
+The Smart Meal Planner integrates recipe management, nutrition calculation, and weekly planning into a unified platform.
 
 The application will:
 
-- Provide structured recipes with clear ingredient lists and preparation steps
+- Provide structured recipes with standardized ingredient lists and preparation steps
 - Automatically calculate calories and macronutrients based on ingredient data
-- Allow filtering by:
-  - Calorie range
-  - Price range
-  - Macronutrient values
-  - Included or excluded ingredients
-- Enable portion size and recipe adjustment with automatic recalculation
-- Allow users to save and organize favorite recipes
+- Allow filtering by calorie range, macronutrient values, and included or excluded ingredients
+- Enable portion size adjustment with automatic nutritional recalculation
+- Allow users to save and organize recipes
 - Provide a weekly meal planner
-- Automatically generate a shopping list based on planned meals
-- Allow users to import recipes from external platforms (via link and optional caption text)
+- Automatically generate a consolidated shopping list based on planned meals
+- Future extensions may include automated recipe import from external platforms and price-based filtering.
 
-The goal is to reduce time spent deciding what to cook, prevent information loss, and improve meal variety and nutrition awareness.
+The goal is to reduce decision fatigue, improve organization, and enhance nutrition awareness within a single integrated workflow.
 
 ---
 
 ## 4. Target Users
 
-Primary target users include:
+The system primarily targets:
 
-- Students (price)
-- Busy people
-- Health-conscious individuals
-- People who cook regularly at home
+- Students seeking budget-aware meal planning  
+- Busy individuals who require efficient decision-making  
+- Health-conscious users monitoring calorie or macronutrient intake  
+- Individuals who cook regularly and seek better organization  
 
-These users value time efficiency, structured information, and better control over nutrition.
-
----
+These users value time efficiency, structured organization, and greater control over nutrition.
 
 ## 5. Minimum Viable Product (MVP)
 
 The initial version of the system will include:
 
-- User authentication
-- Recipe creation and storage
-- Ingredient database with nutritional values
-- Automatic calorie and macronutrient calculation
-- Filtering by calories and ingredients
-- Saved recipes functionality
-- Basic weekly meal planner
-- Shopping list generator
+- User authentication  
+- Manual recipe creation, editing, and storage  
+- Integration with a nutritional data source for ingredient values  
+- Automatic calorie and macronutrient calculation  
+- Filtering by calories and included or excluded ingredients  
+- Basic weekly meal planner  
+- Automatic shopping list generation based on planned meals  
 
-Recipe import from external platforms will initially support manual text input. Automatic extraction (scraping or AI-based parsing) is considered a future enhancement.
+Recipe import from external platforms will initially support manual text input. Automated extraction (scraping or AI-based parsing) is considered a post-MVP enhancement.
 
 ---
 
@@ -97,25 +88,32 @@ Recipe import from external platforms will initially support manual text input. 
 
 ## 7. Technical Overview
 
-**Frontend:** Web application  
-**Backend:** REST API  
-**Database:** Relational database (e.g., PostgreSQL)  
-**External Integration:** Nutrition database API  
+**Frontend:** Web application (React + TypeScript)  
+Responsible for user interaction, meal planning interface, filtering controls, and data visualization.
 
-The system will follow a modular and scalable architecture to support future expansion.
+**Backend:** REST API (Node.js + Express)  
+Handles authentication, recipe management, nutrition computation orchestration, and business logic.
 
----
+**Database:** PostgreSQL  
+Stores users, recipes, ingredients, meal plans, and shopping list data.
 
-## 9. Future Improvements
+**External Integration (MVP):** USDA FoodData Central API (nutrition data)  
+Provides standardized nutritional values used for macro and calorie calculations.
 
-- AI-based recipe extraction from links
-- Personalized meal recommendations
-- Smart “cook with what you have” feature
-- Advanced nutrition analytics
-- Improved saved-recipe organization and tagging system
+The system follows a layered architecture separating presentation, application logic, and data persistence, ensuring maintainability and supporting future extensions (e.g., AI-based extraction).
 
 ---
 
-## Conclusion
+## 8. Future Improvements
 
-Smart meal planner aims to reduce decision fatigue, prevent information overload, and simplify home cooking by combining structured recipe storage, nutrition awareness, filtering, and meal planning into one unified platform.
+- AI-based recipe extraction from links  
+- Personalized meal recommendations  
+- Smart “cook with what you have” feature  
+- Advanced nutrition analytics  
+- Improved saved-recipe organization and tagging system  
+
+---
+
+## 9. Conclusion
+
+Smart Meal Planner aims to reduce decision fatigue, prevent information overload, and simplify home cooking by combining structured recipe storage, nutrition awareness, filtering, and meal planning into one unified platform.
