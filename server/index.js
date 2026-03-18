@@ -2,12 +2,17 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 require("dotenv").config();
+const authRoutes = require("./routes/auth");
+const testRoutes = require("./routes/test");
 
 const app = express();
 
 app.use(morgan("dev"));
 app.use(cors({ origin: process.env.CORS_ORIGIN || "*" }));
 app.use(express.json());
+
+app.use("/auth", authRoutes);
+app.use("/test", testRoutes);
 
 app.get("/health", (req, res) => res.json({ ok: true }));
 
@@ -17,5 +22,5 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || "Internal Server Error" });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
