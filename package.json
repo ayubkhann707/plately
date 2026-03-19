@@ -1,0 +1,16 @@
+{
+  "name": "meal-planner-project-se",
+  "version": "1.0.0",
+  "description": "Smart Meal Planner - Unified Recipe Management and Meal Planning",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "npm install --prefix client && npm install --prefix server",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

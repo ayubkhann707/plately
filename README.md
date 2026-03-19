@@ -65,12 +65,12 @@ Frontend (React + TypeScript)
 - Filtering and search controls  
 - Data visualization  
 
-### Backend
-- Authentication  
-- Recipe CRUD operations  
-- Nutrition orchestration  
-- Business logic  
-- Meal plan + shopping list aggregation  
+### Server
+- Authentication
+- Recipe CRUD operations
+- Nutrition orchestration
+- Business logic
+- Meal plan + shopping list aggregation
 
 ### Database (PostgreSQL)
 Stores:
@@ -147,11 +147,11 @@ Expected extracted fields:
 
 ## Environment Variables
 
-### Backend
-- `DATABASE_URL`  
-- `FDC_API_KEY`  
-- `JWT_SECRET`  
-- `AI_SERVICE_URL`  
+### Server
+- `DATABASE_URL`
+- `FDC_API_KEY`
+- `JWT_SECRET`
+- `AI_SERVICE_URL`
 
 ### AI Microservice (Optional)
 - `LLM_API_KEY`  
@@ -162,20 +162,17 @@ Expected extracted fields:
 ## Local Development
 
 1. Start PostgreSQL (locally or via Docker).  
-2. Start Backend:  
-   - `cd backend`  
-   - `npm install`  
-   - `npm run dev`  
-3. Start Frontend:  
-   - `cd frontend`  
-   - `npm install`  
-   - `npm run dev`  
-4. Start AI Microservice (optional):  
-   - `cd ai-service`  
-   - `python -m venv .venv`  
-   - activate environment  
-   - `pip install -r requirements.txt`  
-   - `python app.py`  
+2. Install all dependencies:
+   - `npm install`
+   - `npm run install:all`
+3. Run both server and client:
+   - `npm run dev`
+4. Start AI Microservice (optional):
+   - `cd ai-service`
+   - `python -m venv .venv`
+   - activate environment
+   - `pip install -r requirements.txt`
+   - `python app.py`
 
 Adjust commands according to your project scripts.
 
@@ -183,10 +180,10 @@ Adjust commands according to your project scripts.
 
 ## Project Structure
 
-- `/frontend`  
-- `/backend`  
-- `/ai-service`  
-- `/docs`  
+- `/client`
+- `/server`
+- `/ai-service`
+- `/docs`
 
 ---
 
@@ -222,33 +219,34 @@ To be defined.
 
 ### 1. Clone the repository
 
+```bash
 git clone https://github.com/Sasha-newf/meal-planner-project-se.git
 cd meal-planner-project-se
+```
 
 ### 2. Create env file
 
-Copy .env.example to .env
+Copy `.env.example` to `.env`
 
+```bash
 cp .env.example .env
+```
 
 ### 3. Start database
 
+```bash
 docker compose up -d
+```
 
-### 4. Install server dependencies
+### 4. Install all dependencies
 
-cd server
+```bash
 npm install
+npm run install:all
+```
 
-### 5. Run server
+### 5. Run the project (client and server)
 
+```bash
 npm run dev
-
-### 6. Install client dependencies
-
-cd ../client
-npm install
-
-### 7. Run client
-
-npm run dev
+```

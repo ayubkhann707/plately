@@ -3,6 +3,7 @@ const cors = require("cors");
 const morgan = require("morgan");
 require("dotenv").config();
 const authRoutes = require("./routes/auth");
+const postsRoutes = require("./routes/posts");
 const testRoutes = require("./routes/test");
 
 const app = express();
@@ -12,6 +13,7 @@ app.use(cors({ origin: process.env.CORS_ORIGIN || "*" }));
 app.use(express.json());
 
 app.use("/auth", authRoutes);
+app.use("/posts", postsRoutes);
 app.use("/test", testRoutes);
 
 app.get("/health", (req, res) => res.json({ ok: true }));
