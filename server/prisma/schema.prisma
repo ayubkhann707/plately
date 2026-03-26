@@ -21,10 +21,10 @@ model Post {
   id        String   @id @default(cuid())
   title     String
   videoUrl  String
-  creatorId String
+  creatorId String?
   createdAt DateTime @default(now())
 
-  creator   User   @relation(fields: [creatorId], references: [id])
+  creator   User?   @relation(fields: [creatorId], references: [id])
   recipe    Recipe?
   saves     Save[]
 

@@ -1,4 +1,5 @@
 const prisma = require("../prismaClient");
+const { toPostDto } = require("../dto/postDto");
 
 exports.getFeed = async (req, res) => {
   try {
@@ -12,11 +13,16 @@ exports.getFeed = async (req, res) => {
         createdAt: "desc",
       },
       include: {
-        recipe: true,
+        recipe: {
+          include: {
+            ingredients: true,
+            steps: true,
+          },
+        },
       },
     });
 
-    res.json(posts);
+    res.json(posts.map(toPostDto));
 
   } catch (err) {
     console.error(err);
@@ -48,7 +54,7 @@ exports.getPostById = async (req, res) => {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    res.json(post);
+    res.json(toPostDto(post));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
