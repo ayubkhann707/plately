@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import Layout from "./layout/Layout";
 
 import Feed from "./pages/Feed";
+import CreatePost from "./pages/CreatePost";
 import Library from "./pages/Library";
 import Plan from "./pages/Plan";
 import Profile from "./pages/Profile";
@@ -12,6 +13,7 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Feed />} />
+        <Route path="/create" element={<CreatePost />} />
         <Route path="/library" element={<Library />} />
         <Route path="/plan" element={<Plan />} />
         <Route path="/profile" element={<Profile />} />

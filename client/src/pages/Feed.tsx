@@ -26,6 +26,10 @@ export default function Feed() {
     <div>
       <h1>Feed page</h1>
 
+      <Button onClick={() => navigate("/create")}>
+        Create Post
+      </Button>
+
       {posts.map((post) => (
         <Card key={post.id}>
           <h3>{post.title}</h3>
