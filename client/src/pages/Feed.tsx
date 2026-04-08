@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Card from "../components/Card";
 import Button from "../components/Button";
 import api from "../api/client";
+import RecipeCard from "../components/RecipeCard";
 
 interface Post {
-  id: string | number;
+  id: string;
   title: string;
 }
 
@@ -30,13 +30,8 @@ export default function Feed() {
         Create Post
       </Button>
 
-      {posts.map((post) => (
-        <Card key={post.id}>
-          <h3>{post.title}</h3>
-          <Button onClick={() => navigate(`/posts/${post.id}`)}>
-            Open
-          </Button>
-        </Card>
+      {posts.map((post: any) => (
+        <RecipeCard key={post.id} post={post} onOpen={() => navigate(`/posts/${post.id}`)} />
       ))}
     </div>
   );

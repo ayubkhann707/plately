@@ -5,6 +5,7 @@ require("dotenv").config();
 const authRoutes = require("./routes/auth");
 const postsRoutes = require("./routes/posts");
 const testRoutes = require("./routes/test");
+const saveRoutes = require("./routes/save");
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use("/auth", authRoutes);
 app.use("/posts", postsRoutes);
 app.use("/test", testRoutes);
+app.use("/", saveRoutes);
 
 app.get("/health", (req, res) => res.json({ ok: true }));
 

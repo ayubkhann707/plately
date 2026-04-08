@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+require("dotenv").config();
 const { PrismaClient } = require("@prisma/client");
 const { PrismaPg } = require("@prisma/adapter-pg");
 
@@ -28,6 +29,11 @@ async function main() {
     data: { email: "demo2@example.com", password: passwordHash },
   });
 
+  // Create demo-user for the savePost endpoint
+  await prisma.user.create({
+    data: { id: "demo-user", email: "demo@example.com", password: passwordHash },
+  });
+
   async function createPostWithRecipe(creatorId, title, videoUrl, servings, timeMinutes, ingredients, steps) {
     return prisma.post.create({
       data: {
@@ -49,7 +55,7 @@ async function main() {
   await createPostWithRecipe(
     user1.id,
     "Spicy Noodles (15 min)",
-    "https://example.com/video1",
+    "https://www.youtube.com/watch?v=A_o2qiaDpfQ",
     2,
     15,
     [
@@ -63,7 +69,7 @@ async function main() {
   await createPostWithRecipe(
     user1.id,
     "Simple Salad",
-    "https://example.com/video2",
+    "https://www.youtube.com/watch?v=G_H6S-qVByM",
     1,
     10,
     [
@@ -77,7 +83,7 @@ async function main() {
   await createPostWithRecipe(
     user2.id,
     "Pancakes",
-    "https://example.com/video3",
+    "https://www.youtube.com/watch?v=LWu5n_I_WvE",
     2,
     20,
     [
