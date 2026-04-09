@@ -38,29 +38,31 @@ export default function Post() {
   }
 
   if (!post) {
-    return <div>Loading...</div>;
+    return (
+      <div style={{ textAlign: "center", marginTop: "20px" }}>
+        Loading recipes...
+      </div>
+    );
   }
 
-  const buttonStyle = {
-    padding: "8px 14px",
-    borderRadius: "10px",
-    border: "none",
-    background: "#4CAF50",
-    color: "white",
-    fontWeight: "bold",
-    cursor: "pointer",
-    marginBottom: "12px"
-  };
-
   return (
-    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "16px" }}>
+    <div>
       <h1>{post.title}</h1>
 
-      {saved ? (
-        <button style={buttonStyle} onClick={handleUnsave}>✔ Saved</button>
-      ) : (
-        <button style={buttonStyle} onClick={handleSave}>Save</button>
-      )}
+      <button
+        onClick={saved ? handleUnsave : handleSave}
+        style={{
+          background: saved ? "#ccc" : "#4CAF50",
+          color: "white",
+          padding: "8px 16px",
+          borderRadius: "20px",
+          border: "none",
+          cursor: "pointer",
+          marginBottom: "12px"
+        }}
+      >
+        {saved ? "Saved ✓" : "Save"}
+      </button>
 
       <div style={{
         borderRadius: "12px",
@@ -70,11 +72,12 @@ export default function Post() {
       }}>
         <iframe
           width="100%"
-          height="250"
+          height="300"
           src={post.videoUrl.replace("watch?v=", "embed/")}
           title="Recipe video"
-          style={{ border: "none" }}
-        ></iframe>
+          frameBorder="0"
+          allowFullScreen
+        />
       </div>
 
       <h2 style={{ marginTop: "20px" }}>Recipe</h2>

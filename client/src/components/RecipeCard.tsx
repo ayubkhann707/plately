@@ -1,32 +1,46 @@
-export default function RecipeCard({ post, onOpen }: any) {
+export default function RecipeCard({ post, onOpen, onToggleSave }: any) {
   return (
-    <div style={{
-      border: "1px solid #ddd",
-      borderRadius: "12px",
-      padding: "16px",
-      marginBottom: "12px",
-      boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
-    }}>
-      <h3>{post.title}</h3>
+    <div 
+      onClick={onOpen}
+      onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.01)"}
+      onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+      style={{
+        border: "1px solid #eee",
+        borderRadius: "12px",
+        padding: "16px",
+        background: "#fff",
+        transition: "transform 0.15s ease",
+        cursor: "pointer",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <h3 style={{ margin: 0 }}>{post.title}</h3>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSave(post.id);
+          }}
+          style={{
+            background: post.isSaved ? "#ccc" : "#4CAF50",
+            color: "white",
+            padding: "6px 12px",
+            borderRadius: "20px",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "14px"
+          }}
+        >
+          {post.isSaved ? "Saved ✓" : "Save"}
+        </button>
+      </div>
 
-      <p>{post.recipe?.timeMinutes} min • {post.recipe?.servings} servings</p>
+      <p style={{ margin: "8px 0" }}>{post.recipe?.timeMinutes} min • {post.recipe?.servings} servings</p>
 
-      <ul>
+      <ul style={{ margin: "8px 0", paddingLeft: "20px" }}>
         {post.recipe?.ingredients.slice(0, 3).map((i: any) => (
           <li key={i.name}>{i.name}</li>
         ))}
       </ul>
-
-      <button onClick={onOpen} style={{
-        padding: "8px 12px",
-        borderRadius: "8px",
-        border: "none",
-        background: "#4CAF50",
-        color: "white",
-        cursor: "pointer"
-      }}>
-        Open →
-      </button>
     </div>
   );
 }
