@@ -7,6 +7,7 @@ import Library from "./pages/Library";
 import Plan from "./pages/Plan";
 import Profile from "./pages/Profile";
 import Post from "./pages/Post";
+import ImportRecipe from "./pages/ImportRecipe";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/" element={<Feed />} />
         <Route path="/create" element={<CreatePost />} />
         <Route path="/library" element={<Library />} />
+        <Route path="/import" element={<ImportRecipe />} />
         <Route path="/plan" element={<Plan />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/posts/:id" element={<Post />} />

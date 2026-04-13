@@ -7,24 +7,22 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String // must be changed
-  createdAt DateTime @default(now())
-
+  id        String         @id @default(cuid())
+  email     String         @unique
+  password  String
+  createdAt DateTime       @default(now())
+  planItems MealPlanItem[]
   posts     Post[]
   saves     Save[]
-  planItems MealPlanItem[]
 }
 
 model Post {
   id        String   @id @default(cuid())
   title     String
   videoUrl  String
-  creatorId String?
+  creatorId String
   createdAt DateTime @default(now())
-
-  creator   User?   @relation(fields: [creatorId], references: [id])
+  creator   User     @relation(fields: [creatorId], references: [id])
   recipe    Recipe?
   saves     Save[]
 
@@ -32,15 +30,14 @@ model Post {
 }
 
 model Recipe {
-  id          String  @id @default(cuid())
-  postId      String  @unique
+  id          String         @id @default(cuid())
+  postId      String         @unique
   servings    Int?
   timeMinutes Int?
-
-  post        Post   @relation(fields: [postId], references: [id])
   ingredients Ingredient[]
-  steps       Step[]
   planItems   MealPlanItem[]
+  post        Post           @relation(fields: [postId], references: [id])
+  steps       Step[]
 }
 
 model Ingredient {
@@ -49,8 +46,7 @@ model Ingredient {
   name     String
   quantity Float?
   unit     String?
-
-  recipe   Recipe @relation(fields: [recipeId], references: [id])
+  recipe   Recipe  @relation(fields: [recipeId], references: [id])
 
   @@index([recipeId])
 }
@@ -60,7 +56,6 @@ model Step {
   recipeId String
   order    Int
   text     String
-
   recipe   Recipe @relation(fields: [recipeId], references: [id])
 
   @@index([recipeId])
@@ -70,9 +65,8 @@ model Save {
   userId    String
   postId    String
   createdAt DateTime @default(now())
-
-  user      User @relation(fields: [userId], references: [id])
-  post      Post @relation(fields: [postId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@id([userId, postId])
   @@index([postId])
@@ -83,9 +77,8 @@ model MealPlanItem {
   userId   String
   recipeId String
   date     DateTime
-
-  user     User   @relation(fields: [userId], references: [id])
-  recipe   Recipe @relation(fields: [recipeId], references: [id])
+  recipe   Recipe   @relation(fields: [recipeId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
 
   @@index([userId, date])
   @@index([recipeId])

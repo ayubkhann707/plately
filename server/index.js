@@ -2,10 +2,12 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 require("dotenv").config();
+
 const authRoutes = require("./routes/auth");
 const postsRoutes = require("./routes/posts");
 const testRoutes = require("./routes/test");
 const saveRoutes = require("./routes/save");
+const importsRoutes = require("./routes/imports");
 
 const app = express();
 
@@ -17,6 +19,7 @@ app.use("/auth", authRoutes);
 app.use("/posts", postsRoutes);
 app.use("/test", testRoutes);
 app.use("/", saveRoutes);
+app.use("/imports", importsRoutes);
 
 app.get("/health", (req, res) => res.json({ ok: true }));
 
