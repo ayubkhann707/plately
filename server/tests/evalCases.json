@@ -1,0 +1,17 @@
+[
+  {
+    "name": "perfect_match",
+    "predicted": ["eggs", "flour", "milk", "sugar", "salt"],
+    "expectedIngredients": ["eggs", "flour", "milk", "sugar", "salt"]
+  },
+  {
+    "name": "missing_ingredient",
+    "predicted": ["olive oil", "garlic", "parmesan cheese", "black pepper"],
+    "expectedIngredients": ["pasta", "olive oil", "garlic", "parmesan cheese", "black pepper"]
+  },
+  {
+    "name": "false_positive",
+    "predicted": ["tomatoes", "olive oil", "salt", "medium heat"],
+    "expectedIngredients": ["tomatoes", "olive oil", "salt"]
+  }
+]
