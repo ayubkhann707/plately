@@ -4,8 +4,8 @@ const router = express.Router();
 const {
   getFeed,
   getPostById,
+  createPost,
 } = require("../controllers/postsController");
-const { createPost } = require("../controllers/postController");
 
 router.get("/feed", getFeed);
 router.get("/:id", getPostById);

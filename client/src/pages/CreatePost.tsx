@@ -1,12 +1,18 @@
 import { useState } from "react";
 import api from "../api/client";
 
+type Ingredient = {
+  name: string;
+  quantity: number;
+  unit: string;
+};
+
 export default function CreatePost() {
   const [title, setTitle] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [servings, setServings] = useState(1);
   const [timeMinutes, setTimeMinutes] = useState(10);
-  const [ingredients, setIngredients] = useState([
+  const [ingredients, setIngredients] = useState<Ingredient[]>([
     { name: "", quantity: 0, unit: "" },
   ]);
   const [steps, setSteps] = useState([""]);
@@ -30,8 +36,15 @@ export default function CreatePost() {
       setTimeMinutes(10);
       setIngredients([{ name: "", quantity: 0, unit: "" }]);
       setSteps([""]);
-    } catch {
-      alert("Error creating post");
+    } catch (err: any) {
+      console.error("Create post error:", err);
+      console.error("Server response:", err?.response?.data);
+
+      alert(
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          "Error creating post"
+      );
     }
   }
 
@@ -109,11 +122,14 @@ export default function CreatePost() {
           />
 
           <button
+            type="button"
             onClick={() => {
-              const newIngredients = ingredients.filter(
-                (_, i) => i !== index
+              const newIngredients = ingredients.filter((_, i) => i !== index);
+              setIngredients(
+                newIngredients.length > 0
+                  ? newIngredients
+                  : [{ name: "", quantity: 0, unit: "" }]
               );
-              setIngredients(newIngredients);
             }}
           >
             Remove
@@ -122,6 +138,7 @@ export default function CreatePost() {
       ))}
 
       <button
+        type="button"
         onClick={() =>
           setIngredients([
             ...ingredients,
@@ -147,9 +164,10 @@ export default function CreatePost() {
           />
 
           <button
+            type="button"
             onClick={() => {
               const newSteps = steps.filter((_, i) => i !== index);
-              setSteps(newSteps);
+              setSteps(newSteps.length > 0 ? newSteps : [""]);
             }}
           >
             Remove
@@ -157,13 +175,13 @@ export default function CreatePost() {
         </div>
       ))}
 
-      <button
-        onClick={() => setSteps([...steps, ""])}
-      >
+      <button type="button" onClick={() => setSteps([...steps, ""])}>
         Add Step
       </button>
 
-      <button onClick={handleSubmit}>Create</button>
+      <button type="button" onClick={handleSubmit}>
+        Create
+      </button>
     </div>
   );
 }
