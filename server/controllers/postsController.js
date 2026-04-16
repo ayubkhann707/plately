@@ -61,7 +61,9 @@ exports.createPost = async (req, res) => {
     const result = postSchema.safeParse(req.body);
 
     if (!result.success) {
-      return res.status(400).json(result.error);
+      return res.status(400).json({
+        error: result.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join(", "),
+      });
     }
 
     const { title, videoUrl, servings, timeMinutes, ingredients, steps } = result.data;

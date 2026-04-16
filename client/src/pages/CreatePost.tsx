@@ -40,11 +40,13 @@ export default function CreatePost() {
       console.error("Create post error:", err);
       console.error("Server response:", err?.response?.data);
 
-      alert(
+      const errorMessage =
         err?.response?.data?.error ||
-          err?.response?.data?.message ||
-          "Error creating post"
-      );
+        err?.response?.data?.message ||
+        err?.message ||
+        "Error creating post";
+
+      alert(errorMessage);
     }
   }
 

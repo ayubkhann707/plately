@@ -8,6 +8,8 @@ const postsRoutes = require("./routes/posts");
 const testRoutes = require("./routes/test");
 const saveRoutes = require("./routes/save");
 const importsRoutes = require("./routes/imports");
+const planRoutes = require("./routes/plan");
+const groceryRoutes = require("./routes/grocery");
 
 const app = express();
 
@@ -20,6 +22,8 @@ app.use("/posts", postsRoutes);
 app.use("/test", testRoutes);
 app.use("/", saveRoutes);
 app.use("/imports", importsRoutes);
+app.use("/plan", planRoutes);
+app.use("/grocery", groceryRoutes);
 
 app.get("/health", (req, res) => res.json({ ok: true }));
 
