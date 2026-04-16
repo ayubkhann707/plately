@@ -12,6 +12,7 @@ export default function Layout() {
         <Link to="/">Feed</Link>
         <Link to="/library">Library</Link>
         <Link to="/plan">Plan</Link>
+        <Link to="/grocery">Grocery</Link>
         <Link to="/profile">Profile</Link>
       </nav>
 

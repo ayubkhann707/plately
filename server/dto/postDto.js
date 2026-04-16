@@ -6,6 +6,7 @@ function toPostDto(post) {
 
     recipe: post.recipe
       ? {
+          id: post.recipe.id,
           servings: post.recipe.servings,
           timeMinutes: post.recipe.timeMinutes,
 

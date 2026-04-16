@@ -37,6 +37,22 @@ export default function Post() {
     }
   }
 
+  async function handleAddToPlan() {
+    if (!post?.recipe?.id) {
+      alert("This post has no recipe to add");
+      return;
+    }
+    try {
+      await api.post("/plan", {
+        recipeId: post.recipe.id,
+        date: new Date().toISOString().split('T')[0]
+      });
+      alert("Added to plan");
+    } catch (err) {
+      alert("Error adding to plan");
+    }
+  }
+
   if (!post) {
     return (
       <div style={{ textAlign: "center", marginTop: "20px" }}>
@@ -49,20 +65,35 @@ export default function Post() {
     <div>
       <h1>{post.title}</h1>
 
-      <button
-        onClick={saved ? handleUnsave : handleSave}
-        style={{
-          background: saved ? "#ccc" : "#4CAF50",
-          color: "white",
-          padding: "8px 16px",
-          borderRadius: "20px",
-          border: "none",
-          cursor: "pointer",
-          marginBottom: "12px"
-        }}
-      >
-        {saved ? "Saved ✓" : "Save"}
-      </button>
+      <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+        <button
+          onClick={saved ? handleUnsave : handleSave}
+          style={{
+            background: saved ? "#ccc" : "#4CAF50",
+            color: "white",
+            padding: "8px 16px",
+            borderRadius: "20px",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          {saved ? "Saved ✓" : "Save"}
+        </button>
+
+        <button
+          onClick={handleAddToPlan}
+          style={{
+            background: "#2196F3",
+            color: "white",
+            padding: "8px 16px",
+            borderRadius: "20px",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          Add to Plan
+        </button>
+      </div>
 
       <div style={{
         borderRadius: "12px",
@@ -80,28 +111,34 @@ export default function Post() {
         />
       </div>
 
-      <h2 style={{ marginTop: "20px" }}>Recipe</h2>
+      {!post.recipe ? (
+        <p>No recipe details available for this post.</p>
+      ) : (
+        <>
+          <h2 style={{ marginTop: "20px" }}>Recipe</h2>
 
-      <p>Servings: {post.recipe.servings}</p>
-      <p>Time: {post.recipe.timeMinutes} min</p>
+          <p>Servings: {post.recipe.servings}</p>
+          <p>Time: {post.recipe.timeMinutes} min</p>
 
-      <h4>Ingredients</h4>
+          <h4>Ingredients</h4>
 
-      <ul style={{ paddingLeft: "20px" }}>
-        {post.recipe.ingredients.map((i: any) => (
-          <li key={i.name}>
-            {i.name} — {i.quantity} {i.unit}
-          </li>
-        ))}
-      </ul>
+          <ul style={{ paddingLeft: "20px" }}>
+            {post.recipe.ingredients.map((i: any) => (
+              <li key={i.name}>
+                {i.name} — {i.quantity} {i.unit}
+              </li>
+            ))}
+          </ul>
 
-      <h4>Steps</h4>
+          <h4>Steps</h4>
 
-      <ol style={{ paddingLeft: "20px" }}>
-        {post.recipe.steps.map((s: any) => (
-          <li key={s.order}>{s.text}</li>
-        ))}
-      </ol>
+          <ol style={{ paddingLeft: "20px" }}>
+            {post.recipe.steps.map((s: any) => (
+              <li key={s.order}>{s.text}</li>
+            ))}
+          </ol>
+        </>
+      )}
     </div>
   );
 }
