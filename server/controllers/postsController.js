@@ -1,6 +1,7 @@
 const prisma = require("../prismaClient");
 const { postSchema } = require("../validation/postSchema");
 const { toPostDto } = require("../dto/postDto");
+const { getUserIdOrFallback } = require("../services/userService");
 
 exports.getFeed = async (req, res) => {
   try {
@@ -66,25 +67,16 @@ exports.createPost = async (req, res) => {
       });
     }
 
-    const { title, videoUrl, servings, timeMinutes, ingredients, steps } = result.data;
+    const { title, videoUrl, servings, timeMinutes, ingredients, steps, tags } = result.data;
 
-    let creatorId = req.userId;
-
-    if (!creatorId) {
-      const firstUser = await prisma.user.findFirst();
-      if (!firstUser) {
-        return res.status(400).json({
-          error: "No users found in database. Create a user first.",
-        });
-      }
-      creatorId = firstUser.id;
-    }
+    const creatorId = await getUserIdOrFallback(req);
 
     const post = await prisma.post.create({
       data: {
         title,
         videoUrl,
         creatorId,
+        tags: tags || [],
         recipe: {
           create: {
             servings,

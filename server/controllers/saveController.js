@@ -1,12 +1,12 @@
 const prisma = require("../prismaClient");
 const { toPostDto } = require("../dto/postDto");
+const { getUserIdOrFallback } = require("../services/userService");
 
 exports.savePost = async (req, res) => {
   try {
     const postId = req.params.id;
 
-    // For now fake user
-    const userId = "demo-user";
+    const userId = await getUserIdOrFallback(req);
 
     const saved = await prisma.save.create({
       data: {
@@ -24,7 +24,7 @@ exports.savePost = async (req, res) => {
 
 exports.getSavedPosts = async (req, res) => {
   try {
-    const userId = "demo-user";
+    const userId = await getUserIdOrFallback(req);
 
     const saved = await prisma.save.findMany({
       where: { userId },
@@ -53,7 +53,7 @@ exports.getSavedPosts = async (req, res) => {
 exports.unsavePost = async (req, res) => {
   try {
     const postId = req.params.id;
-    const userId = "demo-user";
+    const userId = await getUserIdOrFallback(req);
 
     await prisma.save.deleteMany({
       where: {

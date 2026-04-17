@@ -3,6 +3,7 @@ function toPostDto(post) {
     id: post.id,
     title: post.title,
     videoUrl: post.videoUrl,
+    tags: post.tags,
 
     recipe: post.recipe
       ? {

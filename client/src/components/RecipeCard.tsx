@@ -41,6 +41,20 @@ export default function RecipeCard({ post, onOpen, onToggleSave }: any) {
           <li key={i.name}>{i.name}</li>
         ))}
       </ul>
+
+      <div style={{ marginTop: "8px" }}>
+        {post.tags?.map((tag: string) => (
+          <span key={tag} style={{
+            background: "#eee",
+            padding: "4px 8px",
+            borderRadius: "6px",
+            marginRight: "6px",
+            fontSize: "12px"
+          }}>
+            #{tag}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

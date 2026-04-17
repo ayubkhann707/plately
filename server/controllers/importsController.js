@@ -5,6 +5,7 @@ const {
   extractVideoMetadata,
   extractRecipeWithAI,
 } = require("../services/importVideoService");
+const { getUserIdOrFallback } = require("../services/userService");
 
 exports.importRecipeFromVideo = async (req, res) => {
   try {
@@ -16,19 +17,7 @@ exports.importRecipeFromVideo = async (req, res) => {
       });
     }
 
-    let finalCreatorId = creatorId;
-
-    if (!finalCreatorId) {
-      const firstUser = await prisma.user.findFirst();
-
-      if (!firstUser) {
-        return res.status(400).json({
-          error: "No users found in database. Create a user first.",
-        });
-      }
-
-      finalCreatorId = firstUser.id;
-    }
+    const finalCreatorId = await getUserIdOrFallback(req);
 
     const platform = detectPlatform(videoUrl);
     const metadata = await extractVideoMetadata(videoUrl);

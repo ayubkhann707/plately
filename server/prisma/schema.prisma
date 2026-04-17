@@ -21,6 +21,7 @@ model Post {
   title     String
   videoUrl  String
   creatorId String
+  tags      String[]
   createdAt DateTime @default(now())
   creator   User     @relation(fields: [creatorId], references: [id])
   recipe    Recipe?

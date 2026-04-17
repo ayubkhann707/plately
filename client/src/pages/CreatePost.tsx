@@ -16,6 +16,7 @@ export default function CreatePost() {
     { name: "", quantity: 0, unit: "" },
   ]);
   const [steps, setSteps] = useState([""]);
+  const [tags, setTags] = useState("");
 
   async function handleSubmit() {
     try {
@@ -26,6 +27,7 @@ export default function CreatePost() {
         timeMinutes,
         ingredients,
         steps,
+        tags: tags.split(",").map(t => t.trim()).filter(t => t !== ""),
       });
 
       alert("Post created!");
@@ -36,6 +38,7 @@ export default function CreatePost() {
       setTimeMinutes(10);
       setIngredients([{ name: "", quantity: 0, unit: "" }]);
       setSteps([""]);
+      setTags("");
     } catch (err: any) {
       console.error("Create post error:", err);
       console.error("Server response:", err?.response?.data);
@@ -180,6 +183,16 @@ export default function CreatePost() {
       <button type="button" onClick={() => setSteps([...steps, ""])}>
         Add Step
       </button>
+
+      <h3>Tags</h3>
+
+      <div>
+        <input
+          placeholder="tags (comma separated)"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+        />
+      </div>
 
       <button type="button" onClick={handleSubmit}>
         Create

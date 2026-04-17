@@ -4,6 +4,7 @@ const app = require("../index");
 jest.mock("../prismaClient", () => ({
   user: {
     findFirst: jest.fn(),
+    create: jest.fn(),
   },
   post: {
     create: jest.fn(),
@@ -37,15 +38,25 @@ describe("POST /imports/video", () => {
     expect(response.body.error).toMatch(/videoUrl is required/i);
   });
 
-  test("returns 400 when no users exist", async () => {
+  test("auto-creates a user when no users exist", async () => {
     prisma.user.findFirst.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: "auto_user_1" });
+    
+    extractVideoMetadata.mockResolvedValue({ title: "Test" });
+    extractYouTubeTranscript.mockResolvedValue("Test");
+    extractRecipeWithAI.mockResolvedValue({
+      title: "Test",
+      ingredients: [{ name: "Test" }],
+      steps: ["Test"]
+    });
+    prisma.post.create.mockResolvedValue({ id: "post_1", recipe: { ingredients: [], steps: [] } });
 
     const response = await request(app)
       .post("/imports/video")
       .send({ videoUrl: "https://youtube.com/watch?v=abc" });
 
-    expect(response.statusCode).toBe(400);
-    expect(response.body.error).toMatch(/no users found/i);
+    expect(response.statusCode).toBe(200);
+    expect(prisma.user.create).toHaveBeenCalled();
   });
 
   test("imports recipe successfully", async () => {

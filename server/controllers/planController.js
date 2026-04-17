@@ -1,8 +1,9 @@
 const prisma = require("../prismaClient");
+const { getUserIdOrFallback } = require("../services/userService");
 
 exports.addToPlan = async (req, res) => {
   try {
-    const userId = "demo-user";
+    const userId = await getUserIdOrFallback(req);
     const { recipeId, date } = req.body;
 
     if (!recipeId || !date) {
@@ -30,7 +31,7 @@ exports.addToPlan = async (req, res) => {
 
 exports.getPlan = async (req, res) => {
   try {
-    const userId = "demo-user";
+    const userId = await getUserIdOrFallback(req);
 
     const { from, to } = req.query;
 
@@ -65,7 +66,7 @@ exports.getPlan = async (req, res) => {
 
 exports.deleteFromPlan = async (req, res) => {
   try {
-    const userId = "demo-user";
+    const userId = await getUserIdOrFallback(req);
     const { id } = req.params;
 
     const existing = await prisma.mealPlanItem.findUnique({

@@ -16,6 +16,8 @@ const postSchema = z.object({
   ingredients: z.array(ingredientSchema),
 
   steps: z.array(z.string()),
+
+  tags: z.array(z.string()).optional(),
 });
 
 module.exports = {

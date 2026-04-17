@@ -1,8 +1,9 @@
 const prisma = require("../prismaClient");
+const { getUserIdOrFallback } = require("../services/userService");
 
 exports.getGroceryList = async (req, res) => {
   try {
-    const userId = "demo-user";
+    const userId = await getUserIdOrFallback(req);
     const { from, to } = req.query;
 
     const planItems = await prisma.mealPlanItem.findMany({
