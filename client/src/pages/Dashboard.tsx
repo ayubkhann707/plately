@@ -2,24 +2,17 @@ import "./Dashboard.css";
 import { Fragment } from "react";
 import {
   Bell,
-  BookOpen,
-  CalendarDays,
   ChevronDown,
-  ChevronRight,
   Clock,
   Droplets,
   Flame,
   Heart,
-  Leaf,
   MessageCircle,
   MoreHorizontal,
   Plus,
-  Settings,
   Share2,
-  ShoppingCart,
   Star,
   Users,
-  UtensilsCrossed,
   Wheat,
   ChefHat,
   Bookmark,
@@ -69,22 +62,6 @@ type DayPlan = {
   isToday?: boolean;
   meals: MealSlot[];
 };
-
-type NavItem = {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-  badge?: number;
-};
-
-const navItems: NavItem[] = [
-  { icon: <CalendarDays size={18} />, label: "Meal Plan", active: true },
-  { icon: <BookOpen size={18} />, label: "Recipes" },
-  { icon: <UtensilsCrossed size={18} />, label: "Discover" },
-  { icon: <Heart size={18} />, label: "Saved", badge: 12 },
-  { icon: <ShoppingCart size={18} />, label: "Grocery List", badge: 3 },
-  { icon: <Users size={18} />, label: "Community" },
-];
 
 const feedPosts: FeedPost[] = [
   {
@@ -311,59 +288,6 @@ const weekData: DayPlan[] = [
     meals: [{ type: "Breakfast" }, { type: "Lunch" }, { type: "Dinner" }],
   },
 ];
-
-function Sidebar() {
-  return (
-    <aside className="plan-sidebar">
-      <div className="plan-brand">
-        <div className="plan-brand__icon">
-          <Leaf size={16} />
-        </div>
-        <span className="plan-brand__text">Plately</span>
-      </div>
-
-      <nav className="plan-nav">
-        {navItems.map((item) => (
-          <button
-            key={item.label}
-            className={`plan-nav__item ${item.active ? "is-active" : ""}`}
-          >
-            <span className="plan-nav__icon">{item.icon}</span>
-            <span className="plan-nav__label">{item.label}</span>
-            {item.badge ? <span className="plan-nav__badge">{item.badge}</span> : null}
-          </button>
-        ))}
-      </nav>
-
-      <div className="plan-sidebar__bottom">
-        <div className="plan-pro-card">
-          <p className="plan-pro-card__title">Pro Plan</p>
-          <p className="plan-pro-card__text">Unlimited recipes & AI suggestions</p>
-          <button className="plan-pro-card__button">
-            Manage plan <ChevronRight size={12} />
-          </button>
-        </div>
-
-        <button className="plan-settings-btn">
-          <Settings size={18} />
-          Settings
-        </button>
-
-        <div className="plan-user">
-          <img
-            src="https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=60"
-            alt="avatar"
-            className="plan-user__avatar"
-          />
-          <div className="plan-user__meta">
-            <p className="plan-user__name">Sarah Mitchell</p>
-            <p className="plan-user__email">sarah@email.com</p>
-          </div>
-        </div>
-      </div>
-    </aside>
-  );
-}
 
 function Header() {
   return (
@@ -689,39 +613,35 @@ function SearchIcon() {
 
 export default function Dashboard() {
   return (
-    <div className="plan-page">
-      <Sidebar />
+    <div className="plan-main-shell">
+      <Header />
 
-      <div className="plan-main-shell">
-        <Header />
+      <div className="plan-content">
+        <div className="plan-main">
+          <TodaySummary />
 
-        <div className="plan-content">
-          <div className="plan-main">
-            <TodaySummary />
-
-            <div className="plan-section">
-              <div className="plan-section__header">
-                <div>
-                  <h2 className="plan-section__title">Weekly Overview</h2>
-                  <p className="plan-section__subtitle">
-                    Click any slot to add or swap a meal
-                  </p>
-                </div>
-
-                <div className="plan-section__actions">
-                  <button className="plan-secondary-btn">Auto-fill</button>
-                  <button className="plan-primary-outline-btn">Generate plan</button>
-                </div>
+          <div className="plan-section">
+            <div className="plan-section__header">
+              <div>
+                <h2 className="plan-section__title">Weekly Overview</h2>
+                <p className="plan-section__subtitle">
+                  Click any slot to add or swap a meal
+                </p>
               </div>
 
-              <WeeklyPlan />
+              <div className="plan-section__actions">
+                <button className="plan-secondary-btn">Auto-fill</button>
+                <button className="plan-primary-outline-btn">Generate plan</button>
+              </div>
             </div>
 
-            <RecipeCards />
+            <WeeklyPlan />
           </div>
 
-          <CommunityFeed />
+          <RecipeCards />
         </div>
+
+        <CommunityFeed />
       </div>
     </div>
   );

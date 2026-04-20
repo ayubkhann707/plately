@@ -1,21 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Search,
-  SlidersHorizontal,
-  ChevronDown,
-  Download,
-} from "lucide-react";
+import { Search, SlidersHorizontal, ChevronDown } from "lucide-react";
 import api from "../api/client";
 import RecipeFilter, { type FilterState } from "../components/RecipeFilter";
-import ImportRecipeModal from "../components/ImportRecipeModal";
 import LibraryRecipeGrid, {
   type LibraryPost,
 } from "../components/LibraryRecipeGrid";
 
 type SortOption = "newest" | "popular" | "quickest" | "title";
 
-export default function Library() {
+export default function Saved() {
   const navigate = useNavigate();
 
   const [posts, setPosts] = useState<LibraryPost[]>([]);
@@ -24,52 +18,38 @@ export default function Library() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [showFilters, setShowFilters] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
 
   const [filters, setFilters] = useState<FilterState>({
     mealType: [],
     dietary: [],
     cookTime: "",
     difficulty: "",
-    savedOnly: false,
+    savedOnly: true,
     importedOnly: false,
   });
 
   useEffect(() => {
-    async function loadRecipes() {
+    async function loadSaved() {
       try {
-        const res = await api.get("/posts/feed");
-        const recipePosts = res.data.filter((post: LibraryPost) => Boolean(post.recipe));
-        setPosts(recipePosts);
+        const res = await api.get("/saved");
+        setPosts(res.data.map((p: LibraryPost) => ({ ...p, isSaved: true })));
       } catch (err) {
-        console.error("Failed to load recipes", err);
+        console.error("Failed to load saved recipes", err);
       } finally {
         setLoading(false);
       }
     }
 
-    loadRecipes();
+    loadSaved();
   }, []);
 
   async function onToggleSave(postId: string) {
     try {
-      const target = posts.find((p) => p.id === postId);
-      const isCurrentlySaved = Boolean(target?.isSaved);
-
-      if (isCurrentlySaved) {
-        await api.delete(`/posts/${postId}/save`);
-        setPosts((prev) =>
-          prev.map((p) => (p.id === postId ? { ...p, isSaved: false } : p))
-        );
-      } else {
-        await api.post(`/posts/${postId}/save`);
-        setPosts((prev) =>
-          prev.map((p) => (p.id === postId ? { ...p, isSaved: true } : p))
-        );
-      }
+      await api.delete(`/posts/${postId}/save`);
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
     } catch (err) {
-      console.error("Error toggling save", err);
-      alert("Error updating saved status");
+      console.error("Error unsaving", err);
+      alert("Error removing saved recipe");
     }
   }
 
@@ -130,10 +110,6 @@ export default function Library() {
       });
     }
 
-    if (filters.savedOnly) {
-      result = result.filter((post) => post.isSaved);
-    }
-
     if (filters.importedOnly) {
       result = result.filter((post) => Boolean(post.videoUrl));
     }
@@ -155,9 +131,9 @@ export default function Library() {
     <div className="flex flex-col min-w-0">
       <header className="bg-white border border-gray-100 rounded-3xl px-6 md:px-8 py-6 mb-6 shadow-sm">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Recipes</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Saved Recipes</h1>
           <p className="text-sm text-gray-400 mt-1">
-            Browse, save, and organize your recipe collection
+            Your favorite recipes saved for later
           </p>
         </div>
 
@@ -169,7 +145,7 @@ export default function Library() {
             />
             <input
               type="text"
-              placeholder="Search recipes, ingredients..."
+              placeholder="Search saved recipes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-300 transition-all placeholder:text-gray-400"
@@ -227,14 +203,6 @@ export default function Library() {
                 ))}
               </div>
             </div>
-
-            <button
-              onClick={() => setShowImportModal(true)}
-              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm shadow-green-200"
-            >
-              <Download size={15} />
-              Import Recipe
-            </button>
           </div>
         </div>
       </header>
@@ -251,7 +219,7 @@ export default function Library() {
         <div className="flex-1 min-w-0">
           {loading ? (
             <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-500">
-              Loading recipes...
+              Loading saved recipes...
             </div>
           ) : (
             <LibraryRecipeGrid
@@ -262,10 +230,6 @@ export default function Library() {
           )}
         </div>
       </div>
-
-      {showImportModal && (
-        <ImportRecipeModal onClose={() => setShowImportModal(false)} />
-      )}
     </div>
   );
 }

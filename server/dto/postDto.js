@@ -3,7 +3,7 @@ function toPostDto(post) {
     id: post.id,
     title: post.title,
     videoUrl: post.videoUrl,
-    tags: post.tags,
+    tags: post.tags ?? [],
 
     recipe: post.recipe
       ? {
@@ -11,13 +11,13 @@ function toPostDto(post) {
           servings: post.recipe.servings,
           timeMinutes: post.recipe.timeMinutes,
 
-          ingredients: post.recipe.ingredients.map(i => ({
+          ingredients: post.recipe.ingredients.map((i) => ({
             name: i.name,
             quantity: i.quantity,
             unit: i.unit,
           })),
 
-          steps: post.recipe.steps.map(s => ({
+          steps: post.recipe.steps.map((s) => ({
             order: s.order,
             text: s.text,
           })),

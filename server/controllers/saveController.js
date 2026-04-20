@@ -24,7 +24,10 @@ exports.savePost = async (req, res) => {
 
 exports.getSavedPosts = async (req, res) => {
   try {
+    console.log("GET /saved hit");
+
     const userId = await getUserIdOrFallback(req);
+    console.log("userId =", userId);
 
     const saved = await prisma.save.findMany({
       where: { userId },
@@ -42,11 +45,19 @@ exports.getSavedPosts = async (req, res) => {
       },
     });
 
-    const posts = saved.map((s) => toPostDto(s.post));
+    console.log("saved count =", saved.length);
+
+    const posts = saved
+      .filter((s) => s.post)
+      .map((s) => toPostDto(s.post));
 
     res.json(posts);
   } catch (err) {
-    res.status(500).json({ error: "Failed to get saved posts" });
+    console.error("GET /saved error:", err);
+    res.status(500).json({
+      error: "Failed to get saved posts",
+      details: err.message,
+    });
   }
 };
 

@@ -63,11 +63,21 @@ exports.createPost = async (req, res) => {
 
     if (!result.success) {
       return res.status(400).json({
-        error: result.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join(", "),
+        error: result.error.issues
+          .map((e) => `${e.path.join(".")}: ${e.message}`)
+          .join(", "),
       });
     }
 
-    const { title, videoUrl, servings, timeMinutes, ingredients, steps, tags } = result.data;
+    const {
+      title,
+      videoUrl,
+      servings,
+      timeMinutes,
+      ingredients,
+      steps,
+      tags,
+    } = result.data;
 
     const creatorId = await getUserIdOrFallback(req);
 

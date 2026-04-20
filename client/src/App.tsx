@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import Feed from "./pages/Feed";
 import CreatePost from "./pages/CreatePost";
 import Library from "./pages/Library";
+import Saved from "./pages/Saved";
 import Grocery from "./pages/Grocery";
 import Profile from "./pages/Profile";
 import Post from "./pages/Post";
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/feed" element={<Feed />} />
         <Route path="/create" element={<CreatePost />} />
         <Route path="/library" element={<Library />} />
+        <Route path="/saved" element={<Saved />} />
         <Route path="/import" element={<ImportRecipe />} />
         <Route path="/grocery" element={<Grocery />} />
         <Route path="/profile" element={<Profile />} />
