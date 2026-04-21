@@ -2,6 +2,19 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api/client";
 
+const getEmbedUrl = (url: string) => {
+  if (!url) return "";
+  // YouTube normal
+  if (url.includes("watch?v=")) {
+    return url.replace("watch?v=", "embed/");
+  }
+  // YouTube shorts
+  if (url.includes("/shorts/")) {
+    return url.replace("/shorts/", "/embed/");
+  }
+  return url;
+};
+
 export default function Post() {
   const { id } = useParams();
 
@@ -63,36 +76,55 @@ export default function Post() {
 
   return (
     <div>
-      <h1>{post.title}</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1 style={{ margin: 0 }}>{post.title}</h1>
 
-      <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-        <button
-          onClick={saved ? handleUnsave : handleSave}
-          style={{
-            background: saved ? "#ccc" : "#4CAF50",
-            color: "white",
-            padding: "8px 16px",
-            borderRadius: "20px",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          {saved ? "Saved ✓" : "Save"}
-        </button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            onClick={handleAddToPlan}
+            style={{
+              background: "#2196F3",
+              color: "white",
+              padding: "8px 16px",
+              borderRadius: "20px",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Add to Plan
+          </button>
 
-        <button
-          onClick={handleAddToPlan}
-          style={{
-            background: "#2196F3",
-            color: "white",
-            padding: "8px 16px",
-            borderRadius: "20px",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          Add to Plan
-        </button>
+          <button
+            onClick={saved ? handleUnsave : handleSave}
+            style={{
+              background: saved ? "#ccc" : "#4CAF50",
+              color: "white",
+              padding: "8px 16px",
+              borderRadius: "20px",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            {saved ? "Saved ✓" : "Save"}
+          </button>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: "8px", marginTop: "8px", marginBottom: "16px" }}>
+        {post.tags?.map((tag: string) => (
+          <span
+            key={tag}
+            style={{
+              background: "#eee",
+              padding: "4px 12px",
+              borderRadius: "12px",
+              fontSize: "0.9rem",
+              color: "#555"
+            }}
+          >
+            {tag}
+          </span>
+        ))}
       </div>
 
       <div style={{
@@ -103,8 +135,8 @@ export default function Post() {
       }}>
         <iframe
           width="100%"
-          height="300"
-          src={post.videoUrl.replace("watch?v=", "embed/")}
+          height="400"
+          src={getEmbedUrl(post.videoUrl)}
           title="Recipe video"
           frameBorder="0"
           allowFullScreen
@@ -115,26 +147,41 @@ export default function Post() {
         <p>No recipe details available for this post.</p>
       ) : (
         <>
-          <h2 style={{ marginTop: "20px" }}>Recipe</h2>
+          <h2 style={{ marginTop: "16px", marginBottom: "12px" }}>Recipe</h2>
 
-          <p>Servings: {post.recipe.servings}</p>
-          <p>Time: {post.recipe.timeMinutes} min</p>
+          <div style={{ display: "flex", gap: 12, marginBottom: "20px" }}>
+            <div style={{ background: "#f5f5f5", padding: "8px 16px", borderRadius: "8px" }}>
+              ⏱ {post.recipe.timeMinutes} min
+            </div>
+            <div style={{ background: "#f5f5f5", padding: "8px 16px", borderRadius: "8px" }}>
+              🍽 {post.recipe.servings} servings
+            </div>
+          </div>
 
-          <h4>Ingredients</h4>
+          <h4 style={{ marginBottom: "8px" }}>Ingredients</h4>
 
-          <ul style={{ paddingLeft: "20px" }}>
+          <ul style={{ paddingLeft: 0, listStyleType: "none" }}>
             {post.recipe.ingredients.map((i: any) => (
-              <li key={i.name}>
-                {i.name} — {i.quantity} {i.unit}
+              <li
+                key={i.name}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "8px 0",
+                  borderBottom: "1px solid #eee"
+                }}
+              >
+                <span>{i.name}</span>
+                <span>{i.quantity} {i.unit}</span>
               </li>
             ))}
           </ul>
 
-          <h4>Steps</h4>
+          <h4 style={{ marginTop: "20px", marginBottom: "8px" }}>Steps</h4>
 
           <ol style={{ paddingLeft: "20px" }}>
             {post.recipe.steps.map((s: any) => (
-              <li key={s.order}>{s.text}</li>
+              <li key={s.order} style={{ marginBottom: "8px" }}>{s.text}</li>
             ))}
           </ol>
         </>
