@@ -4,6 +4,8 @@ import api from "../api/client";
 
 const getEmbedUrl = (url: string) => {
   if (!url) return "";
+  if (url.includes("youtube.com/embed/")) return url;
+
   // YouTube normal
   if (url.includes("watch?v=")) {
     return url.replace("watch?v=", "embed/");
@@ -11,6 +13,13 @@ const getEmbedUrl = (url: string) => {
   // YouTube shorts
   if (url.includes("/shorts/")) {
     return url.replace("/shorts/", "/embed/");
+  }
+  // YouTube youtu.be
+  if (url.includes("youtu.be/")) {
+    const videoId = url.split("youtu.be/")[1]?.split("?")[0];
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
   }
   return url;
 };
