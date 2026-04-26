@@ -4,24 +4,42 @@ import api from "../api/client";
 
 const getEmbedUrl = (url: string) => {
   if (!url) return "";
-  if (url.includes("youtube.com/embed/")) return url;
 
-  // YouTube normal
-  if (url.includes("watch?v=")) {
-    return url.replace("watch?v=", "embed/");
-  }
-  // YouTube shorts
-  if (url.includes("/shorts/")) {
-    return url.replace("/shorts/", "/embed/");
-  }
-  // YouTube youtu.be
-  if (url.includes("youtu.be/")) {
-    const videoId = url.split("youtu.be/")[1]?.split("?")[0];
-    if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}`;
+  try {
+    const parsed = new URL(url);
+    let videoId = "";
+    let start = "";
+
+    if (parsed.hostname.includes("youtu.be")) {
+      videoId = parsed.pathname.slice(1).split("?")[0];
     }
+
+    if (parsed.hostname.includes("youtube.com")) {
+      videoId = parsed.searchParams.get("v") || "";
+
+      if (!videoId && parsed.pathname.includes("/shorts/")) {
+        videoId = parsed.pathname.split("/shorts/")[1]?.split("/")[0] || "";
+      }
+
+      if (!videoId && parsed.pathname.includes("/embed/")) {
+        videoId = parsed.pathname.split("/embed/")[1]?.split("/")[0] || "";
+      }
+    }
+
+    const timeParam = parsed.searchParams.get("t");
+
+    if (timeParam) {
+      start = timeParam.replace("s", "");
+    }
+
+    return videoId
+      ? `https://www.youtube.com/embed/${videoId}${
+          start ? `?start=${start}` : ""
+        }`
+      : url;
+  } catch {
+    return url;
   }
-  return url;
 };
 
 export default function Post() {
