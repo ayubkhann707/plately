@@ -101,6 +101,9 @@ export default function Post() {
     );
   }
 
+  const embedUrl = getEmbedUrl(post.videoUrl);
+  const isYouTube = embedUrl.includes("youtube.com/embed");
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -158,16 +161,66 @@ export default function Post() {
         borderRadius: "12px",
         overflow: "hidden",
         boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-        marginBottom: "16px"
+        marginBottom: "16px",
+        background: "#000",
+        position: "relative",
+        paddingTop: isYouTube ? "56.25%" : "0", // 16:9 Aspect Ratio for YouTube
+        height: isYouTube ? 0 : "400px"
       }}>
-        <iframe
-          width="100%"
-          height="400"
-          src={getEmbedUrl(post.videoUrl)}
-          title="Recipe video"
-          frameBorder="0"
-          allowFullScreen
-        />
+        {isYouTube ? (
+          <iframe
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%"
+            }}
+            src={embedUrl}
+            title="Recipe video"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <div style={{
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            padding: "20px",
+            textAlign: "center"
+          }}>
+            <p>This video format cannot be embedded directly.</p>
+            <a
+              href={post.videoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "#4CAF50",
+                textDecoration: "underline",
+                marginTop: "10px",
+                fontWeight: "bold"
+              }}
+            >
+              Watch video on original platform
+            </a>
+            {post.imageUrl && (
+              <img
+                src={post.imageUrl}
+                alt="Video thumbnail"
+                style={{
+                  marginTop: "20px",
+                  maxHeight: "200px",
+                  borderRadius: "8px",
+                  opacity: 0.6
+                }}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       {!post.recipe ? (

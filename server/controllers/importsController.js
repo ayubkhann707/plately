@@ -105,6 +105,7 @@ This is clearly a recipe video. Extract at least the likely ingredient names if 
       data: {
         title: recipeData.title || metadata.title || "Imported Video Recipe",
         videoUrl,
+        imageUrl: metadata.thumbnail || null,
         creatorId: finalCreatorId,
         recipe: {
           create: {

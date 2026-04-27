@@ -67,6 +67,7 @@ describe("POST /imports/video", () => {
       description: "Simple pasta with garlic and olive oil",
       uploader: "Chef",
       channel: "Chef Channel",
+      thumbnail: "https://img.youtube.com/vi/abc/hqdefault.jpg"
     });
 
     extractYouTubeTranscript.mockResolvedValue(
@@ -88,6 +89,7 @@ describe("POST /imports/video", () => {
     prisma.post.create.mockResolvedValue({
       id: "post_1",
       title: "Pasta Recipe",
+      imageUrl: "https://img.youtube.com/vi/abc/hqdefault.jpg",
       recipe: {
         ingredients: [
           { name: "pasta", quantity: 200, unit: "g" },
@@ -108,6 +110,7 @@ describe("POST /imports/video", () => {
     expect(response.statusCode).toBe(200);
     expect(response.body.success).toBe(true);
     expect(response.body.platform).toBe("youtube");
+    expect(response.body.post.imageUrl).toBe("https://img.youtube.com/vi/abc/hqdefault.jpg");
     expect(response.body.post.recipe.ingredients).toHaveLength(3);
     expect(response.body.post.recipe.steps).toHaveLength(2);
   });

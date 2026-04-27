@@ -12,6 +12,15 @@ const openai = new OpenAI({
 });
 
 async function extractYouTubeTranscript(videoUrl) {
+  try {
+    const { YoutubeTranscript } = await import("youtube-transcript/dist/youtube-transcript.esm.js");
+    const transcript = await YoutubeTranscript.fetchTranscript(videoUrl);
+    return transcript.map((item) => item.text).join(" ");
+  } catch (error) {
+    console.log("YoutubeTranscript library failed:", error.message);
+  }
+
+  // Fallback to yt-dlp if library fails
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "yt-subs-"));
   const outputTemplate = path.join(tempDir, "subs");
 
@@ -86,21 +95,44 @@ async function extractVideoMetadata(videoUrl) {
     );
 
     const data = JSON.parse(stdout);
+    console.log("METADATA RAW:", JSON.stringify(data, null, 2));
 
     return {
       title: data.title || "",
       description: data.description || "",
       uploader: data.uploader || "",
       channel: data.channel || "",
+      thumbnail: data.thumbnail || (data.thumbnails && data.thumbnails.length > 0 ? data.thumbnails[data.thumbnails.length - 1].url : ""),
     };
   } catch (error) {
     console.log("AUTO METADATA FAILED:", error.message);
+
+    // Fallback for YouTube thumbnails even if yt-dlp fails
+    let thumbnail = "";
+    if (videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be")) {
+      try {
+        const url = new URL(videoUrl);
+        let v = "";
+        if (url.hostname.includes("youtu.be")) {
+          v = url.pathname.slice(1);
+        } else {
+          v = url.searchParams.get("v") || "";
+          if (!v && url.pathname.includes("/shorts/")) {
+            v = url.pathname.split("/shorts/")[1]?.split("/")[0] || "";
+          }
+        }
+        if (v) {
+          thumbnail = `https://img.youtube.com/vi/${v}/hqdefault.jpg`;
+        }
+      } catch (e) {}
+    }
 
     return {
       title: "",
       description: "",
       uploader: "",
       channel: "",
+      thumbnail,
     };
   }
 }
