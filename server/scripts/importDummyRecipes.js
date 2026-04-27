@@ -19,11 +19,18 @@ function parseIngredients(ingredients) {
 }
 
 async function main() {
-  const user = await prisma.user.findFirst();
+  let user = await prisma.user.findFirst();
 
   if (!user) {
-    throw new Error("No user found. Register/login in the app first.");
-  }
+    user = await prisma.user.create({
+      data: {
+        email: "demo@plately.app",
+        password: "demo-password",
+      },
+    });
+
+    console.log("Created demo user");
+}
 
   const response = await fetch("https://dummyjson.com/recipes?limit=50");
 
@@ -59,7 +66,8 @@ async function main() {
         recipe: {
           create: {
             servings: recipe.servings || null,
-            timeMinutes: recipe.prepTimeMinutes + recipe.cookTimeMinutes || null,
+            timeMinutes:
+              (recipe.prepTimeMinutes || 0) + (recipe.cookTimeMinutes || 0),
             ingredients: {
               create: parseIngredients(recipe.ingredients),
             },
