@@ -12,11 +12,35 @@ exports.addToPlan = async (req, res) => {
       });
     }
 
+    const mealDate = new Date(date);
+    const dayStart = new Date(mealDate);
+    dayStart.setUTCHours(0, 0, 0, 0);
+    const dayEnd = new Date(mealDate);
+    dayEnd.setUTCHours(23, 59, 59, 999);
+
+    const existing = await prisma.mealPlanItem.findFirst({
+      where: {
+        userId,
+        recipeId,
+        mealType: mealType || "Lunch",
+        date: {
+          gte: dayStart,
+          lte: dayEnd,
+        },
+      },
+    });
+
+    if (existing) {
+      return res.status(409).json({
+        error: "This recipe is already in your plan for this meal slot",
+      });
+    }
+
     const item = await prisma.mealPlanItem.create({
       data: {
         userId,
         recipeId,
-        date: new Date(date),
+        date: mealDate,
         mealType: mealType || "Lunch",
       },
     });
