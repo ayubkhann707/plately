@@ -4,7 +4,7 @@ const { getUserIdOrFallback } = require("../services/userService");
 exports.addToPlan = async (req, res) => {
   try {
     const userId = await getUserIdOrFallback(req);
-    const { recipeId, date } = req.body;
+    const { recipeId, date, mealType } = req.body;
 
     if (!recipeId || !date) {
       return res.status(400).json({
@@ -17,6 +17,7 @@ exports.addToPlan = async (req, res) => {
         userId,
         recipeId,
         date: new Date(date),
+        mealType: mealType || "Lunch",
       },
     });
 
@@ -47,6 +48,7 @@ exports.getPlan = async (req, res) => {
         recipe: {
           include: {
             post: true,
+            ingredients: true,
           },
         },
       },

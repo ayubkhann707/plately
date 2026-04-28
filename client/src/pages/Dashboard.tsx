@@ -1,8 +1,14 @@
 import "./Dashboard.css";
-import { Fragment } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../api/client";
 import {
   Bell,
+  Bookmark,
+  ChefHat,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Droplets,
   Flame,
@@ -14,9 +20,9 @@ import {
   Star,
   Users,
   Wheat,
-  ChefHat,
-  Bookmark,
 } from "lucide-react";
+
+type MealType = "Breakfast" | "Lunch" | "Dinner";
 
 type FeedPost = {
   id: number;
@@ -49,19 +55,86 @@ type Recipe = {
 };
 
 type MealSlot = {
-  type: "Breakfast" | "Lunch" | "Dinner";
-  name?: string;
+  type: MealType;
   time?: string;
-  image?: string;
-  tags?: string[];
+};
+
+type MealPlanItem = {
+  id: string;
+  date: string;
+  mealType: MealType;
+  recipe: {
+    post: {
+      id: string;
+      title: string;
+      imageUrl?: string;
+      tags?: string[];
+    };
+  };
 };
 
 type DayPlan = {
   day: string;
   date: string;
-  isToday?: boolean;
+  fullDate: string;
+  isToday: boolean;
   meals: MealSlot[];
 };
+
+function getStartOfWeek(date: Date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function formatDateForApi(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function isSameDay(a: Date, b: Date) {
+  return formatDateForApi(a) === formatDateForApi(b);
+}
+
+function formatWeekLabel(start: Date) {
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+
+  const startText = start.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+
+  const endText = end.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  return `${startText} – ${endText}`;
+}
+
+function getWeekData(weekStart: Date): DayPlan[] {
+  const today = new Date();
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + index);
+
+    return {
+      day: date.toLocaleDateString("en-US", { weekday: "short" }),
+      date: String(date.getDate()),
+      fullDate: formatDateForApi(date),
+      isToday: isSameDay(date, today),
+      meals: [{ type: "Breakfast" }, { type: "Lunch" }, { type: "Dinner" }],
+    };
+  });
+}
 
 const feedPosts: FeedPost[] = [
   {
@@ -168,133 +241,12 @@ const recipes: Recipe[] = [
   },
 ];
 
-const weekData: DayPlan[] = [
-  {
-    day: "Mon",
-    date: "14",
-    isToday: true,
-    meals: [
-      {
-        type: "Breakfast",
-        name: "Avocado Toast",
-        time: "8:00 AM",
-        image:
-          "https://images.pexels.com/photos/1351238/pexels-photo-1351238.jpeg?auto=compress&cs=tinysrgb&w=120",
-        tags: ["Vegan"],
-      },
-      {
-        type: "Lunch",
-        name: "Greek Salad",
-        time: "12:30 PM",
-        image:
-          "https://images.pexels.com/photos/1213710/pexels-photo-1213710.jpeg?auto=compress&cs=tinysrgb&w=120",
-        tags: ["Vegetarian"],
-      },
-      {
-        type: "Dinner",
-        name: "Grilled Salmon",
-        time: "7:00 PM",
-        image:
-          "https://images.pexels.com/photos/3763847/pexels-photo-3763847.jpeg?auto=compress&cs=tinysrgb&w=120",
-        tags: ["High Protein"],
-      },
-    ],
-  },
-  {
-    day: "Tue",
-    date: "15",
-    meals: [
-      {
-        type: "Breakfast",
-        name: "Oat Porridge",
-        time: "7:30 AM",
-        image:
-          "https://images.pexels.com/photos/4397899/pexels-photo-4397899.jpeg?auto=compress&cs=tinysrgb&w=120",
-      },
-      { type: "Lunch" },
-      {
-        type: "Dinner",
-        name: "Pasta Primavera",
-        time: "6:45 PM",
-        image:
-          "https://images.pexels.com/photos/1437267/pexels-photo-1437267.jpeg?auto=compress&cs=tinysrgb&w=120",
-      },
-    ],
-  },
-  {
-    day: "Wed",
-    date: "16",
-    meals: [
-      { type: "Breakfast" },
-      {
-        type: "Lunch",
-        name: "Chicken Bowl",
-        time: "1:00 PM",
-        image:
-          "https://images.pexels.com/photos/2116094/pexels-photo-2116094.jpeg?auto=compress&cs=tinysrgb&w=120",
-        tags: ["High Protein"],
-      },
-      { type: "Dinner" },
-    ],
-  },
-  {
-    day: "Thu",
-    date: "17",
-    meals: [
-      {
-        type: "Breakfast",
-        name: "Berry Smoothie",
-        time: "8:15 AM",
-        image:
-          "https://images.pexels.com/photos/1337825/pexels-photo-1337825.jpeg?auto=compress&cs=tinysrgb&w=120",
-      },
-      { type: "Lunch" },
-      { type: "Dinner" },
-    ],
-  },
-  {
-    day: "Fri",
-    date: "18",
-    meals: [
-      { type: "Breakfast" },
-      { type: "Lunch" },
-      {
-        type: "Dinner",
-        name: "Beef Tacos",
-        time: "7:30 PM",
-        image:
-          "https://images.pexels.com/photos/2092507/pexels-photo-2092507.jpeg?auto=compress&cs=tinysrgb&w=120",
-      },
-    ],
-  },
-  {
-    day: "Sat",
-    date: "19",
-    meals: [
-      {
-        type: "Breakfast",
-        name: "Pancakes",
-        time: "9:00 AM",
-        image:
-          "https://images.pexels.com/photos/376464/pexels-photo-376464.jpeg?auto=compress&cs=tinysrgb&w=120",
-      },
-      { type: "Lunch" },
-      { type: "Dinner" },
-    ],
-  },
-  {
-    day: "Sun",
-    date: "20",
-    meals: [{ type: "Breakfast" }, { type: "Lunch" }, { type: "Dinner" }],
-  },
-];
-
-function Header() {
+function Header({ weekLabel }: { weekLabel: string }) {
   return (
     <header className="plan-header">
       <div className="plan-header__title-wrap">
         <h1 className="plan-header__title">This Week&apos;s Plan</h1>
-        <p className="plan-header__subtitle">Apr 14 – Apr 20, 2026</p>
+        <p className="plan-header__subtitle">{weekLabel}</p>
       </div>
 
       <div className="plan-header__search">
@@ -356,7 +308,9 @@ function TodaySummary() {
     <div className="plan-summary-grid">
       {stats.map((stat) => (
         <div key={stat.label} className="plan-summary-card">
-          <div className={`plan-summary-card__icon ${stat.cardClass}`}>{stat.icon}</div>
+          <div className={`plan-summary-card__icon ${stat.cardClass}`}>
+            {stat.icon}
+          </div>
           <div>
             <p className="plan-summary-card__label">{stat.label}</p>
             <p className="plan-summary-card__value">
@@ -369,8 +323,16 @@ function TodaySummary() {
   );
 }
 
-function MealCell({ meal }: { meal: MealSlot }) {
-  if (!meal.name) {
+function MealCell({
+  items,
+  fallbackMeal,
+  onClick,
+}: {
+  items: MealPlanItem[];
+  fallbackMeal: MealSlot;
+  onClick?: () => void;
+}) {
+  if (!items.length) {
     return (
       <div className="plan-meal-empty">
         <Plus size={14} />
@@ -378,32 +340,64 @@ function MealCell({ meal }: { meal: MealSlot }) {
     );
   }
 
+  const firstItem = items[0];
+  const title =
+    items.length === 1
+      ? firstItem.recipe.post.title
+      : `${items.length} recipes planned`;
+
   return (
-    <div className="plan-meal-card">
-      {meal.image ? (
-        <img src={meal.image} alt={meal.name} className="plan-meal-card__image" />
+    <div className="plan-meal-card" onClick={onClick} style={{ cursor: "pointer" }}>
+      {firstItem.recipe.post.imageUrl ? (
+        <img
+          src={firstItem.recipe.post.imageUrl}
+          alt={firstItem.recipe.post.title}
+          className="plan-meal-card__image"
+        />
       ) : null}
+
       <div className="plan-meal-card__content">
-        <p className="plan-meal-card__title">{meal.name}</p>
-        {meal.time ? (
-          <p className="plan-meal-card__time">
-            <Clock size={9} /> {meal.time}
-          </p>
-        ) : null}
-        {meal.tags?.length ? (
-          <span className="plan-meal-card__tag">{meal.tags[0]}</span>
+        <p className="plan-meal-card__title">{title}</p>
+
+        <p className="plan-meal-card__time">
+          <Clock size={9} /> {fallbackMeal.time}
+        </p>
+
+        {items.length > 1 ? (
+          <span className="plan-meal-card__tag">Tap to choose</span>
+        ) : firstItem.recipe.post.tags?.length ? (
+          <span className="plan-meal-card__tag">
+            {firstItem.recipe.post.tags[0]}
+          </span>
         ) : null}
       </div>
     </div>
   );
 }
 
-function WeeklyPlan() {
-  const mealTypes: Array<"Breakfast" | "Lunch" | "Dinner"> = [
-    "Breakfast",
-    "Lunch",
-    "Dinner",
-  ];
+function WeeklyPlan({
+  weekData,
+  planItems,
+  onOpenSlot,
+}: {
+  weekData: DayPlan[];
+  planItems: MealPlanItem[];
+  onOpenSlot: (items: MealPlanItem[], title: string) => void;
+}) {
+  const mealTypes: MealType[] = ["Breakfast", "Lunch", "Dinner"];
+
+  function getItemsForSlot(day: DayPlan, mealType: MealType) {
+    return planItems.filter((item) => {
+      const itemDate = item.date.slice(0, 10);
+      return itemDate === day.fullDate && item.mealType === mealType;
+    });
+  }
+
+  function getMealTime(mealType: MealType) {
+    if (mealType === "Breakfast") return "8:00 AM";
+    if (mealType === "Lunch") return "12:30 PM";
+    return "7:00 PM";
+  }
 
   return (
     <div className="plan-weekly-card">
@@ -412,7 +406,7 @@ function WeeklyPlan() {
 
         {weekData.map((day) => (
           <div
-            key={day.day}
+            key={day.fullDate}
             className={`plan-weekly-grid__day ${day.isToday ? "is-today" : ""}`}
           >
             <p className="plan-weekly-grid__day-name">{day.day}</p>
@@ -431,18 +425,207 @@ function WeeklyPlan() {
               <span>{mealType}</span>
             </div>
 
-            {weekData.map((day) => (
-              <div
-                key={`${day.day}-${mealType}`}
-                className={`plan-weekly-grid__cell ${
-                  mealIdx < 2 ? "plan-weekly-grid__cell--border" : ""
-                } ${day.isToday ? "is-today" : ""}`}
-              >
-                <MealCell meal={day.meals[mealIdx]} />
-              </div>
-            ))}
+            {weekData.map((day) => {
+              const items = getItemsForSlot(day, mealType);
+
+              const fallbackMeal: MealSlot = {
+                ...day.meals[mealIdx],
+                time: getMealTime(mealType),
+              };
+
+              return (
+                <div
+                  key={`${day.fullDate}-${mealType}`}
+                  className={`plan-weekly-grid__cell ${
+                    mealIdx < 2 ? "plan-weekly-grid__cell--border" : ""
+                  } ${day.isToday ? "is-today" : ""}`}
+                >
+                  <MealCell
+                    items={items}
+                    fallbackMeal={fallbackMeal}
+                    onClick={
+                      items.length
+                        ? () => onOpenSlot(items, `${day.day} ${day.date} · ${mealType}`)
+                        : undefined
+                    }
+                  />
+                </div>
+              );
+            })}
           </Fragment>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function SlotRecipesModal({
+  items,
+  title,
+  onClose,
+  onDelete,
+  selectedGroceryItemIds,
+  onToggleGroceryItem,
+}: {
+  items: MealPlanItem[];
+  title: string;
+  onClose: () => void;
+  onDelete: (itemId: string) => void;
+  selectedGroceryItemIds: string[];
+  onToggleGroceryItem: (itemId: string) => void;
+}) {
+  const navigate = useNavigate();
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(15, 23, 42, 0.45)",
+        zIndex: 1000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "24px",
+      }}
+    >
+      <div
+        style={{
+          background: "white",
+          borderRadius: "28px",
+          padding: "28px",
+          width: "min(650px, 95vw)",
+          boxShadow: "0 24px 80px rgba(15, 23, 42, 0.25)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: "16px",
+            alignItems: "center",
+            marginBottom: "18px",
+          }}
+        >
+          <div>
+            <h2 style={{ margin: 0 }}>Choose recipe</h2>
+            <p style={{ margin: "6px 0 0", color: "#94a3b8" }}>{title}</p>
+          </div>
+
+          <button
+            onClick={onClose}
+            style={{
+              border: "1px solid #e5e7eb",
+              background: "white",
+              borderRadius: "14px",
+              padding: "10px 16px",
+              cursor: "pointer",
+            }}
+          >
+            Close
+          </button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {items.map((item) => (
+            <div
+              key={item.id}
+              style={{ display: "flex", gap: "10px", alignItems: "stretch" }}
+            >
+              <label
+                style={{
+                  width: "46px",
+                  border: "1px solid #bbf7d0",
+                  background: selectedGroceryItemIds.includes(item.id)
+                    ? "#dcfce7"
+                    : "#f0fdf4",
+                  borderRadius: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedGroceryItemIds.includes(item.id)}
+                  onChange={() => onToggleGroceryItem(item.id)}
+                />
+              </label>
+
+              <button
+                onClick={() => navigate(`/posts/${item.recipe.post.id}`)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  flex: 1,
+                  padding: "12px",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "18px",
+                  background: "white",
+                  cursor: "pointer",
+                  textAlign: "left",
+                }}
+              >
+                {item.recipe.post.imageUrl ? (
+                  <img
+                    src={item.recipe.post.imageUrl}
+                    alt={item.recipe.post.title}
+                    style={{
+                      width: "56px",
+                      height: "56px",
+                      objectFit: "cover",
+                      borderRadius: "14px",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: "56px",
+                      height: "56px",
+                      borderRadius: "14px",
+                      background: "#f1f5f9",
+                    }}
+                  />
+                )}
+
+                <div>
+                  <p style={{ margin: 0, fontWeight: 700, color: "#111827" }}>
+                    {item.recipe.post.title}
+                  </p>
+
+                  {item.recipe.post.tags?.length ? (
+                    <p
+                      style={{
+                        margin: "4px 0 0",
+                        color: "#94a3b8",
+                        fontSize: "13px",
+                      }}
+                    >
+                      {item.recipe.post.tags.join(", ")}
+                    </p>
+                  ) : null}
+                </div>
+              </button>
+
+              <button
+                onClick={() => onDelete(item.id)}
+                style={{
+                  border: "1px solid #fecaca",
+                  background: "#fef2f2",
+                  color: "#dc2626",
+                  borderRadius: "14px",
+                  padding: "12px 14px",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -612,9 +795,113 @@ function SearchIcon() {
 }
 
 export default function Dashboard() {
+
+  const [weekStart, setWeekStart] = useState(() => getStartOfWeek(new Date()));
+  const [planItems, setPlanItems] = useState<MealPlanItem[]>([]);
+  const [selectedSlotItems, setSelectedSlotItems] = useState<MealPlanItem[]>([]);
+  const [selectedSlotTitle, setSelectedSlotTitle] = useState("");
+  const [selectedGroceryItemIds, setSelectedGroceryItemIds] = useState<string[]>([]);
+
+  const weekData = useMemo(() => getWeekData(weekStart), [weekStart]);
+  const weekLabel = useMemo(() => formatWeekLabel(weekStart), [weekStart]);
+
+  useEffect(() => {
+    async function loadPlan() {
+      try {
+        const res = await api.get("/plan");
+        setPlanItems(res.data);
+      } catch (err) {
+        console.error("Failed to load meal plan", err);
+      }
+    }
+
+    loadPlan();
+  }, []);
+
+  function goToPreviousWeek() {
+    setWeekStart((current) => {
+      const next = new Date(current);
+      next.setDate(current.getDate() - 7);
+      return next;
+    });
+  }
+
+  function goToNextWeek() {
+    setWeekStart((current) => {
+      const next = new Date(current);
+      next.setDate(current.getDate() + 7);
+      return next;
+    });
+  }
+
+  function goToCurrentWeek() {
+    setWeekStart(getStartOfWeek(new Date()));
+  }
+
+  function openSlotModal(items: MealPlanItem[], title: string) {
+    setSelectedSlotItems(items);
+    setSelectedSlotTitle(title);
+  }
+
+  function closeSlotModal() {
+    setSelectedSlotItems([]);
+    setSelectedSlotTitle("");
+  }
+
+  function toggleGroceryItem(itemId: string) {
+    setSelectedGroceryItemIds((current) =>
+      current.includes(itemId)
+        ? current.filter((id) => id !== itemId)
+        : [...current, itemId]
+    );
+  }
+
+  function handleGenerateGroceryList() {
+    if (selectedGroceryItemIds.length === 0) {
+      alert("Please select at least one recipe from the calendar first");
+      return;
+    }
+
+    const existingIds = JSON.parse(
+      localStorage.getItem("groceryPlanItemIds") || "[]"
+    );
+
+    const mergedIds = Array.from(
+      new Set([...existingIds, ...selectedGroceryItemIds])
+    );
+
+    localStorage.setItem("groceryPlanItemIds", JSON.stringify(mergedIds));
+
+    alert("Added to grocery list");
+  }
+
+  async function handleDeletePlanItem(itemId: string) {
+    try {
+      await api.delete(`/plan/${itemId}`);
+
+      setPlanItems((current) => current.filter((item) => item.id !== itemId));
+
+      setSelectedSlotItems((current) => {
+        const updated = current.filter((item) => item.id !== itemId);
+
+        if (updated.length === 0) {
+          setSelectedSlotTitle("");
+        }
+
+        return updated;
+      });
+
+      setSelectedGroceryItemIds((current) =>
+        current.filter((id) => id !== itemId)
+      );
+    } catch (err) {
+      alert("Error deleting recipe from plan");
+    }
+  }
+
   return (
     <div className="plan-main-shell">
-      <Header />
+      <Header weekLabel={weekLabel} />
 
       <div className="plan-content">
         <div className="plan-main">
@@ -625,17 +912,37 @@ export default function Dashboard() {
               <div>
                 <h2 className="plan-section__title">Weekly Overview</h2>
                 <p className="plan-section__subtitle">
-                  Click any slot to add or swap a meal
+                  Click a planned slot to choose, open, delete, or add recipes to grocery list
                 </p>
               </div>
 
               <div className="plan-section__actions">
-                <button className="plan-secondary-btn">Auto-fill</button>
-                <button className="plan-primary-outline-btn">Generate plan</button>
+                <button className="plan-secondary-btn" onClick={goToPreviousWeek}>
+                  <ChevronLeft size={16} />
+                </button>
+
+                <button className="plan-secondary-btn" onClick={goToCurrentWeek}>
+                  Today
+                </button>
+
+                <button className="plan-secondary-btn" onClick={goToNextWeek}>
+                  <ChevronRight size={16} />
+                </button>
+
+                <button
+                  className="plan-primary-outline-btn"
+                  onClick={handleGenerateGroceryList}
+                >
+                  Add to grocery list
+                </button>
               </div>
             </div>
 
-            <WeeklyPlan />
+            <WeeklyPlan
+              weekData={weekData}
+              planItems={planItems}
+              onOpenSlot={openSlotModal}
+            />
           </div>
 
           <RecipeCards />
@@ -643,6 +950,17 @@ export default function Dashboard() {
 
         <CommunityFeed />
       </div>
+
+      {selectedSlotItems.length > 0 && (
+        <SlotRecipesModal
+          items={selectedSlotItems}
+          title={selectedSlotTitle}
+          onClose={closeSlotModal}
+          onDelete={handleDeletePlanItem}
+          selectedGroceryItemIds={selectedGroceryItemIds}
+          onToggleGroceryItem={toggleGroceryItem}
+        />
+      )}
     </div>
   );
 }

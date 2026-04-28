@@ -79,6 +79,8 @@ model MealPlanItem {
   userId   String
   recipeId String
   date     DateTime
+  mealType String   @default("Lunch")
+
   recipe   Recipe   @relation(fields: [recipeId], references: [id])
   user     User     @relation(fields: [userId], references: [id])
 

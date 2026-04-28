@@ -7,6 +7,50 @@ const {
 } = require("../services/importVideoService");
 const { getUserIdOrFallback } = require("../services/userService");
 
+function getImageFromUrl(url) {
+  if (!url) return null;
+
+  const cleanUrl = String(url).trim();
+  const lower = cleanUrl.toLowerCase().split("?")[0];
+
+  if (
+    lower.endsWith(".jpg") ||
+    lower.endsWith(".jpeg") ||
+    lower.endsWith(".png") ||
+    lower.endsWith(".webp") ||
+    lower.endsWith(".gif")
+  ) {
+    return cleanUrl;
+  }
+
+  try {
+    const parsed = new URL(cleanUrl);
+    let videoId = "";
+
+    if (parsed.hostname.includes("youtu.be")) {
+      videoId = parsed.pathname.slice(1).split("?")[0];
+    }
+
+    if (parsed.hostname.includes("youtube.com")) {
+      videoId = parsed.searchParams.get("v") || "";
+
+      if (!videoId && parsed.pathname.includes("/shorts/")) {
+        videoId = parsed.pathname.split("/shorts/")[1]?.split("/")[0] || "";
+      }
+
+      if (!videoId && parsed.pathname.includes("/embed/")) {
+        videoId = parsed.pathname.split("/embed/")[1]?.split("/")[0] || "";
+      }
+    }
+
+    return videoId
+      ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 exports.importRecipeFromVideo = async (req, res) => {
   try {
     const { videoUrl, caption, creatorId } = req.body;
@@ -97,15 +141,18 @@ This is clearly a recipe video. Extract at least the likely ingredient names if 
 
     if (safeSteps.length === 0) {
       return res.status(400).json({
-        error: "Not enough recipe information was found automatically. Please add a short caption or description.",
+        error:
+          "Not enough recipe information was found automatically. Please add a short caption or description.",
       });
     }
+
+    const imageUrl = metadata.thumbnail || getImageFromUrl(videoUrl);
 
     const createdPost = await prisma.post.create({
       data: {
         title: recipeData.title || metadata.title || "Imported Video Recipe",
         videoUrl,
-        imageUrl: metadata.thumbnail || null,
+        imageUrl,
         creatorId: finalCreatorId,
         recipe: {
           create: {
@@ -135,6 +182,7 @@ This is clearly a recipe video. Extract at least the likely ingredient names if 
     console.log("IMPORT LOG:", {
       videoUrl,
       platform,
+      imageUrl,
       usedAutoDescription: Boolean(metadata.description),
       usedAutoTranscript: Boolean(autoTranscript),
       ingredientCount: safeIngredients.length,

@@ -3,6 +3,50 @@ const { postSchema } = require("../validation/postSchema");
 const { toPostDto } = require("../dto/postDto");
 const { getUserIdOrFallback } = require("../services/userService");
 
+function getImageFromUrl(url) {
+  if (!url) return null;
+
+  const cleanUrl = String(url).trim();
+  const lower = cleanUrl.toLowerCase().split("?")[0];
+
+  if (
+    lower.endsWith(".jpg") ||
+    lower.endsWith(".jpeg") ||
+    lower.endsWith(".png") ||
+    lower.endsWith(".webp") ||
+    lower.endsWith(".gif")
+  ) {
+    return cleanUrl;
+  }
+
+  try {
+    const parsed = new URL(cleanUrl);
+    let videoId = "";
+
+    if (parsed.hostname.includes("youtu.be")) {
+      videoId = parsed.pathname.slice(1).split("?")[0];
+    }
+
+    if (parsed.hostname.includes("youtube.com")) {
+      videoId = parsed.searchParams.get("v") || "";
+
+      if (!videoId && parsed.pathname.includes("/shorts/")) {
+        videoId = parsed.pathname.split("/shorts/")[1]?.split("/")[0] || "";
+      }
+
+      if (!videoId && parsed.pathname.includes("/embed/")) {
+        videoId = parsed.pathname.split("/embed/")[1]?.split("/")[0] || "";
+      }
+    }
+
+    return videoId
+      ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 exports.getFeed = async (req, res) => {
   try {
     const userId = await getUserIdOrFallback(req);
@@ -91,12 +135,13 @@ exports.createPost = async (req, res) => {
     } = result.data;
 
     const creatorId = await getUserIdOrFallback(req);
+    const finalImageUrl = imageUrl || getImageFromUrl(videoUrl);
 
     const post = await prisma.post.create({
       data: {
         title,
         videoUrl,
-        imageUrl: imageUrl || null,
+        imageUrl: finalImageUrl,
         creatorId,
         tags: tags || [],
         recipe: {
