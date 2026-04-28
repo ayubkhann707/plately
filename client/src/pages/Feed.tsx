@@ -90,14 +90,31 @@ export default function Feed() {
         gap: "20px",
         marginTop: "16px"
       }}>
-        {filteredPosts.map((post: any) => (
-          <RecipeCard 
-            key={post.id} 
-            post={post} 
-            onOpen={() => navigate(`/posts/${post.id}`)} 
-            onToggleSave={onToggleSave}
-          />
-        ))}
+        {filteredPosts.length === 0 ? (
+          <div style={{
+            background: "white",
+            borderRadius: "16px",
+            border: "1px solid #f3f4f6",
+            padding: "60px 20px",
+            textAlign: "center",
+          }}>
+            <p style={{ fontSize: "16px", fontWeight: 600, color: "#111827", margin: 0 }}>
+              No posts yet
+            </p>
+            <p style={{ fontSize: "14px", color: "#9ca3af", marginTop: "8px" }}>
+              Be the first to share a recipe!
+            </p>
+          </div>
+        ) : (
+          filteredPosts.map((post: any) => (
+            <RecipeCard
+              key={post.id}
+              post={post}
+              onOpen={() => navigate(`/posts/${post.id}`)}
+              onToggleSave={onToggleSave}
+            />
+          ))
+        )}
       </div>
     </div>
   );
