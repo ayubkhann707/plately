@@ -52,6 +52,9 @@ exports.getFeed = async (req, res) => {
     const userId = await getUserIdOrFallback(req);
 
     const posts = await prisma.post.findMany({
+      where: {
+        isPublic: true,
+      },
       include: {
         recipe: {
           include: {
@@ -144,6 +147,7 @@ exports.createPost = async (req, res) => {
         imageUrl: finalImageUrl,
         creatorId,
         tags: tags || [],
+        isPublic: true,
         recipe: {
           create: {
             servings,

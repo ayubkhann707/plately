@@ -1,8 +1,13 @@
 const express = require("express");
 const router = express.Router();
+const requireAuth = require("../middleware/requireAuth");
 
-const { importRecipeFromVideo } = require("../controllers/importsController");
+const {
+  previewRecipeFromVideo,
+  saveImportedRecipe,
+} = require("../controllers/importsController");
 
-router.post("/video", importRecipeFromVideo);
+router.post("/video/preview", requireAuth, previewRecipeFromVideo);
+router.post("/video/save", requireAuth, saveImportedRecipe);
 
 module.exports = router;

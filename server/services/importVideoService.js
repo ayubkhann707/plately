@@ -13,15 +13,27 @@ const openai = new OpenAI({
 
 async function extractYouTubeTranscript(videoUrl) {
   try {
-    const { YoutubeTranscript } = await import("youtube-transcript/dist/youtube-transcript.esm.js");
-    const transcript = await YoutubeTranscript.fetchTranscript(videoUrl);
+    const {
+      YoutubeTranscript,
+    } = await import(
+      "youtube-transcript/dist/youtube-transcript.esm.js"
+    );
+
+    const transcript =
+      await YoutubeTranscript.fetchTranscript(videoUrl);
+
     return transcript.map((item) => item.text).join(" ");
   } catch (error) {
-    console.log("YoutubeTranscript library failed:", error.message);
+    console.log(
+      "YoutubeTranscript library failed:",
+      error.message
+    );
   }
 
-  // Fallback to yt-dlp if library fails
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "yt-subs-"));
+  const tempDir = await fs.mkdtemp(
+    path.join(os.tmpdir(), "yt-subs-")
+  );
+
   const outputTemplate = path.join(tempDir, "subs");
 
   try {
@@ -39,24 +51,38 @@ async function extractYouTubeTranscript(videoUrl) {
         outputTemplate,
         videoUrl,
       ],
-      { maxBuffer: 20 * 1024 * 1024 }
+      {
+        maxBuffer: 20 * 1024 * 1024,
+      }
     );
 
     const files = await fs.readdir(tempDir);
-    const vttFile = files.find((file) => file.endsWith(".vtt"));
+
+    const vttFile = files.find((file) =>
+      file.endsWith(".vtt")
+    );
 
     if (!vttFile) {
-      console.log("AUTO TRANSCRIPT FAILED: no subtitle file found");
+      console.log(
+        "AUTO TRANSCRIPT FAILED: no subtitle file found"
+      );
       return "";
     }
 
     const vttPath = path.join(tempDir, vttFile);
+
     const raw = await fs.readFile(vttPath, "utf8");
 
     const cleaned = raw
       .replace(/^WEBVTT.*$/gm, "")
-      .replace(/^\d+:\d+:\d+\.\d+\s+-->\s+\d+:\d+:\d+\.\d+.*$/gm, "")
-      .replace(/^\d+:\d+\.\d+\s+-->\s+\d+:\d+\.\d+.*$/gm, "")
+      .replace(
+        /^\d+:\d+:\d+\.\d+\s+-->\s+\d+:\d+:\d+\.\d+.*$/gm,
+        ""
+      )
+      .replace(
+        /^\d+:\d+\.\d+\s+-->\s+\d+:\d+\.\d+.*$/gm,
+        ""
+      )
       .replace(/<[^>]+>/g, "")
       .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")
@@ -68,6 +94,7 @@ async function extractYouTubeTranscript(videoUrl) {
       .filter(Boolean);
 
     const seen = new Set();
+
     const deduped = cleaned.filter((line) => {
       if (seen.has(line)) return false;
       seen.add(line);
@@ -80,9 +107,11 @@ async function extractYouTubeTranscript(videoUrl) {
     return "";
   } finally {
     try {
-      await fs.rm(tempDir, { recursive: true, force: true });
-    } catch {
-    }
+      await fs.rm(tempDir, {
+        recursive: true,
+        force: true,
+      });
+    } catch {}
   }
 }
 
@@ -91,40 +120,62 @@ async function extractVideoMetadata(videoUrl) {
     const { stdout } = await execFileAsync(
       "yt-dlp",
       ["--dump-single-json", "--skip-download", videoUrl],
-      { maxBuffer: 10 * 1024 * 1024 }
+      {
+        maxBuffer: 10 * 1024 * 1024,
+      }
     );
 
     const data = JSON.parse(stdout);
-    console.log("METADATA RAW:", JSON.stringify(data, null, 2));
 
     return {
       title: data.title || "",
       description: data.description || "",
       uploader: data.uploader || "",
       channel: data.channel || "",
-      thumbnail: data.thumbnail || (data.thumbnails && data.thumbnails.length > 0 ? data.thumbnails[data.thumbnails.length - 1].url : ""),
+      thumbnail:
+        data.thumbnail ||
+        (data.thumbnails &&
+        data.thumbnails.length > 0
+          ? data.thumbnails[data.thumbnails.length - 1].url
+          : ""),
     };
   } catch (error) {
-    console.log("AUTO METADATA FAILED:", error.message);
+    console.log(
+      "AUTO METADATA FAILED:",
+      error.message
+    );
 
-    // Fallback for YouTube thumbnails even if yt-dlp fails
     let thumbnail = "";
-    if (videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be")) {
+
+    if (
+      videoUrl.includes("youtube.com") ||
+      videoUrl.includes("youtu.be")
+    ) {
       try {
         const url = new URL(videoUrl);
+
         let v = "";
+
         if (url.hostname.includes("youtu.be")) {
           v = url.pathname.slice(1);
         } else {
           v = url.searchParams.get("v") || "";
-          if (!v && url.pathname.includes("/shorts/")) {
-            v = url.pathname.split("/shorts/")[1]?.split("/")[0] || "";
+
+          if (
+            !v &&
+            url.pathname.includes("/shorts/")
+          ) {
+            v =
+              url.pathname
+                .split("/shorts/")[1]
+                ?.split("/")[0] || "";
           }
         }
+
         if (v) {
           thumbnail = `https://img.youtube.com/vi/${v}/hqdefault.jpg`;
         }
-      } catch (e) {}
+      } catch {}
     }
 
     return {
@@ -137,6 +188,31 @@ async function extractVideoMetadata(videoUrl) {
   }
 }
 
+function extractJsonObject(content) {
+  if (!content) {
+    throw new Error("AI returned empty response");
+  }
+
+  let cleaned = content
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
+
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+
+  if (firstBrace !== -1 && lastBrace !== -1) {
+    cleaned = cleaned.slice(
+      firstBrace,
+      lastBrace + 1
+    );
+  }
+
+  return JSON.parse(cleaned);
+}
+
 async function extractRecipeWithAI(text) {
   const prompt = `
 You extract structured cooking recipes from noisy social media content.
@@ -144,37 +220,64 @@ You extract structured cooking recipes from noisy social media content.
 Return ONLY valid JSON in this exact format:
 {
   "title": "string",
-  "servings": number | null,
-  "timeMinutes": number | null,
+  "servings": null,
+  "timeMinutes": null,
   "ingredients": [
     {
       "name": "string",
-      "quantity": number | null,
-      "unit": "string | null"
+      "quantity": null,
+      "unit": null
     }
   ],
   "steps": ["string"]
 }
 
 Rules:
+- Return JSON only
+- No markdown
+- No comments
+- No explanations
+- Use double quotes only
+- Do not use fractions like 1/2; convert to decimals
+- Do not use math expressions
+- If quantity missing use null
+- If unit missing use null
 - Use only information supported by the text
-- If quantity is missing, use null
-- If unit is missing, use null
-- Extract ingredient names even if quantities are missing
+- Extract ingredient names even if quantities missing
 - Convert cooking actions into ordered steps
-- If a recipe is clearly present, do not return empty steps
-- Do not include markdown
-- Do not include explanations
+- If recipe is clearly present do not return empty steps
 
 Text:
-${text}
+${String(text || "").slice(0, 14000)}
   `.trim();
 
-  const response = await openai.chat.completions.create({
-  model: "gpt-4o-mini",
-  messages: [{ role: "user", content: prompt }],
-});
-return JSON.parse(response.choices[0].message.content);
+  const response =
+    await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0,
+      response_format: {
+        type: "json_object",
+      },
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
+
+  const content =
+    response.choices[0].message.content;
+
+  try {
+    return extractJsonObject(content);
+  } catch (error) {
+    console.log("AI RAW INVALID JSON:", content);
+
+    throw new Error(
+      "AI returned invalid recipe JSON"
+    );
+  }
 }
 
 module.exports = {

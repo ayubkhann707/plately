@@ -1,115 +1,429 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Plus, X } from "lucide-react";
 import api from "../api/client";
 
 type Ingredient = {
-  id: string;
   name: string;
   quantity: number | null;
   unit: string | null;
 };
 
-type Step = {
-  id: string;
-  order: number;
-  text: string;
+type RecipeValidation = {
+  confidenceScore: number;
+  level: "low" | "medium" | "high";
+  warnings: string[];
+  possibleMissingIngredients: {
+    name: string;
+    likelihood: "low" | "medium" | "high";
+    reason: string;
+  }[];
+  summary?: string;
 };
 
-type ImportedPost = {
-  id: string;
+type PreviewRecipe = {
   title: string;
   videoUrl: string;
-  recipe: {
-    ingredients: Ingredient[];
-    steps: Step[];
-  };
+  imageUrl: string | null;
+  servings: number | null;
+  timeMinutes: number | null;
+  ingredients: Ingredient[];
+  steps: string[];
 };
 
 export default function ImportRecipe() {
+  const navigate = useNavigate();
+
   const [videoUrl, setVideoUrl] = useState("");
   const [caption, setCaption] = useState("");
-  const [result, setResult] = useState<ImportedPost | null>(null);
+  const [recipe, setRecipe] = useState<PreviewRecipe | null>(null);
+  const [validation, setValidation] = useState<RecipeValidation | null>(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  async function handleImport() {
+  async function handlePreview() {
     try {
-      setLoading(true);
+      setLoadingPreview(true);
       setError("");
-      setResult(null);
+      setRecipe(null);
+      setValidation(null);
 
-      const response = await api.post("/imports/video", {
+      const response = await api.post("/imports/video/preview", {
         videoUrl,
         caption,
       });
 
-      setResult(response.data.post);
+      setRecipe(response.data.recipe);
+      setValidation(response.data.validation || null);
     } catch (err: any) {
-      console.log("IMPORT ERROR:", err);
-      console.log("STATUS:", err?.response?.status);
-      console.log("DATA:", err?.response?.data);
-
-      setError(
-        err?.response?.data?.error ||
-        err?.message ||
-        "Import failed"
-      );
+      console.log("IMPORT PREVIEW ERROR:", err);
+      setError(err?.response?.data?.error || err?.message || "Import failed");
     } finally {
-      setLoading(false);
+      setLoadingPreview(false);
     }
   }
 
+  async function handleSave() {
+    if (!recipe) return;
+
+    try {
+      setSaving(true);
+      setError("");
+
+      await api.post("/imports/video/save", recipe);
+
+      navigate("/library");
+    } catch (err: any) {
+      console.log("SAVE IMPORT ERROR:", err);
+      setError(err?.response?.data?.error || err?.message || "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function updateIngredient(index: number, field: keyof Ingredient, value: string) {
+    if (!recipe) return;
+
+    const nextIngredients = [...recipe.ingredients];
+
+    nextIngredients[index] = {
+      ...nextIngredients[index],
+      [field]:
+        field === "quantity"
+          ? value === ""
+            ? null
+            : Number(value)
+          : value,
+    };
+
+    setRecipe({
+      ...recipe,
+      ingredients: nextIngredients,
+    });
+  }
+
+  function addIngredient() {
+    if (!recipe) return;
+
+    setRecipe({
+      ...recipe,
+      ingredients: [
+        ...recipe.ingredients,
+        {
+          name: "",
+          quantity: null,
+          unit: "",
+        },
+      ],
+    });
+  }
+
+  function removeIngredient(index: number) {
+    if (!recipe) return;
+
+    const nextIngredients = recipe.ingredients.filter((_, i) => i !== index);
+
+    setRecipe({
+      ...recipe,
+      ingredients:
+        nextIngredients.length > 0
+          ? nextIngredients
+          : [{ name: "", quantity: null, unit: "" }],
+    });
+  }
+
+  function updateStep(index: number, value: string) {
+    if (!recipe) return;
+
+    const nextSteps = [...recipe.steps];
+    nextSteps[index] = value;
+
+    setRecipe({
+      ...recipe,
+      steps: nextSteps,
+    });
+  }
+
+  function addStep() {
+    if (!recipe) return;
+
+    setRecipe({
+      ...recipe,
+      steps: [...recipe.steps, ""],
+    });
+  }
+
+  function removeStep(index: number) {
+    if (!recipe) return;
+
+    const nextSteps = recipe.steps.filter((_, i) => i !== index);
+
+    setRecipe({
+      ...recipe,
+      steps: nextSteps.length > 0 ? nextSteps : [""],
+    });
+  }
+
+  const confidencePercent = validation
+    ? Math.round(validation.confidenceScore * 100)
+    : 0;
+
   return (
-    <div style={{ padding: "24px", maxWidth: "800px" }}>
-      <h1>Import Recipe</h1>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-        <input
-          type="text"
-          placeholder="Video URL"
-          value={videoUrl}
-          onChange={(e) => setVideoUrl(e.target.value)}
-        />
-
-        <textarea
-          placeholder="Caption / Description"
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          rows={5}
-        />
-
-        <button onClick={handleImport} disabled={loading}>
-          {loading ? "Importing..." : "Import Recipe"}
-        </button>
-      </div>
-
-      {error && (
-        <p style={{ color: "red", marginTop: "16px" }}>
-          {error}
+    <div className="max-w-5xl mx-auto">
+      <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-8">
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Import Recipe
+        </h1>
+        <p className="text-sm text-gray-400 mt-1">
+          Import a recipe from video, review it, edit if needed, then save it to your recipes.
         </p>
-      )}
 
-      {result && (
-        <div style={{ marginTop: "32px" }}>
-          <h2>{result.title}</h2>
-          <p>{result.videoUrl}</p>
+        <div className="mt-6 space-y-4">
+          <input
+            type="text"
+            placeholder="Video URL"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
+          />
 
-          <h3>Ingredients</h3>
-          <ul>
-            {result.recipe.ingredients.map((ingredient) => (
-              <li key={ingredient.id}>
-                {ingredient.quantity ?? ""} {ingredient.unit ?? ""} {ingredient.name}
-              </li>
-            ))}
-          </ul>
+          <textarea
+            placeholder="Caption / Description"
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            rows={5}
+            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
+          />
 
-          <h3>Steps</h3>
-          <ol>
-            {result.recipe.steps.map((step) => (
-              <li key={step.id}>{step.text}</li>
-            ))}
-          </ol>
+          <button
+            onClick={handlePreview}
+            disabled={loadingPreview}
+            className="rounded-2xl bg-green-500 px-6 py-3 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60"
+          >
+            {loadingPreview ? "Importing..." : "Generate Preview"}
+          </button>
         </div>
-      )}
+
+        {error && (
+          <p className="mt-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+            {error}
+          </p>
+        )}
+
+        {validation && (
+          <div className="mt-6 rounded-3xl border border-yellow-200 bg-yellow-50 p-5 text-sm text-yellow-900">
+            <h2 className="font-semibold text-yellow-950">
+              AI Validation Score: {validation.level} ({confidencePercent}%)
+            </h2>
+
+            {validation.summary && (
+              <p className="mt-2 text-yellow-800">{validation.summary}</p>
+            )}
+
+            {validation.warnings?.length > 0 && (
+              <div className="mt-4">
+                <p className="font-semibold">Warnings:</p>
+                <ul className="mt-2 list-disc pl-5 space-y-1">
+                  {validation.warnings.map((warning, index) => (
+                    <li key={index}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {validation.possibleMissingIngredients?.length > 0 && (
+              <div className="mt-4">
+                <p className="font-semibold">Possible missing ingredients:</p>
+                <ul className="mt-2 list-disc pl-5 space-y-1">
+                  {validation.possibleMissingIngredients.map((item, index) => (
+                    <li key={index}>
+                      <span className="font-medium">{item.name}</span> —{" "}
+                      {item.likelihood}: {item.reason}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+        {recipe && (
+          <div className="mt-8 border-t border-gray-100 pt-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Review before saving
+            </h2>
+
+            <div className="space-y-6">
+              <section>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Recipe title
+                </label>
+                <input
+                  value={recipe.title}
+                  onChange={(e) =>
+                    setRecipe({ ...recipe, title: e.target.value })
+                  }
+                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm"
+                />
+              </section>
+
+              <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Servings
+                  </label>
+                  <input
+                    type="number"
+                    value={recipe.servings ?? ""}
+                    onChange={(e) =>
+                      setRecipe({
+                        ...recipe,
+                        servings:
+                          e.target.value === "" ? null : Number(e.target.value),
+                      })
+                    }
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Cooking time
+                  </label>
+                  <input
+                    type="number"
+                    value={recipe.timeMinutes ?? ""}
+                    onChange={(e) =>
+                      setRecipe({
+                        ...recipe,
+                        timeMinutes:
+                          e.target.value === "" ? null : Number(e.target.value),
+                      })
+                    }
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm"
+                  />
+                </div>
+              </section>
+
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Ingredients
+                  </h3>
+
+                  <button
+                    type="button"
+                    onClick={addIngredient}
+                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                  >
+                    <Plus size={14} />
+                    Add Ingredient
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {recipe.ingredients.map((ingredient, index) => (
+                    <div
+                      key={index}
+                      className="grid grid-cols-12 gap-3 items-center"
+                    >
+                      <input
+                        placeholder="Name"
+                        value={ingredient.name}
+                        onChange={(e) =>
+                          updateIngredient(index, "name", e.target.value)
+                        }
+                        className="col-span-5 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm"
+                      />
+
+                      <input
+                        type="number"
+                        placeholder="Qty"
+                        value={ingredient.quantity ?? ""}
+                        onChange={(e) =>
+                          updateIngredient(index, "quantity", e.target.value)
+                        }
+                        className="col-span-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm"
+                      />
+
+                      <input
+                        placeholder="Unit"
+                        value={ingredient.unit ?? ""}
+                        onChange={(e) =>
+                          updateIngredient(index, "unit", e.target.value)
+                        }
+                        className="col-span-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => removeIngredient(index)}
+                        className="col-span-1 h-11 w-11 rounded-2xl border border-gray-200 flex items-center justify-center"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Steps
+                  </h3>
+
+                  <button
+                    type="button"
+                    onClick={addStep}
+                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                  >
+                    <Plus size={14} />
+                    Add Step
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {recipe.steps.map((step, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <div className="mt-3 h-7 w-7 shrink-0 rounded-full bg-green-50 text-green-700 text-xs font-semibold flex items-center justify-center">
+                        {index + 1}
+                      </div>
+
+                      <input
+                        placeholder={`Describe step ${index + 1}`}
+                        value={step}
+                        onChange={(e) => updateStep(index, e.target.value)}
+                        className="flex-1 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => removeStep(index)}
+                        className="h-11 w-11 rounded-2xl border border-gray-200 flex items-center justify-center"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <div className="flex justify-end pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="rounded-2xl bg-green-500 px-6 py-3 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60"
+                >
+                  {saving ? "Saving..." : "Save Recipe"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
