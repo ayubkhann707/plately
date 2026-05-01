@@ -7,6 +7,7 @@ const authRoutes = require("./routes/auth");
 const postsRoutes = require("./routes/posts");
 const testRoutes = require("./routes/test");
 const saveRoutes = require("./routes/save");
+const likeRoutes = require("./routes/like");
 const importsRoutes = require("./routes/imports");
 const planRoutes = require("./routes/plan");
 const groceryRoutes = require("./routes/grocery");
@@ -21,13 +22,13 @@ app.use("/auth", authRoutes);
 app.use("/posts", postsRoutes);
 app.use("/test", testRoutes);
 app.use("/", saveRoutes);
+app.use("/", likeRoutes);
 app.use("/imports", importsRoutes);
 app.use("/plan", planRoutes);
 app.use("/grocery", groceryRoutes);
 
 app.get("/health", (req, res) => res.json({ ok: true }));
 
-// error handler
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: err.message || "Internal Server Error" });

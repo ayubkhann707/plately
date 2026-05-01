@@ -5,16 +5,8 @@ const { getUserIdOrFallback } = require("../services/userService");
 exports.savePost = async (req, res) => {
   try {
     const postId = req.params.id;
-
     const userId = await getUserIdOrFallback(req);
-
-    const saved = await prisma.save.create({
-      data: {
-        userId,
-        postId,
-      },
-    });
-
+    const saved = await prisma.save.create({ data: { userId, postId } });
     res.json(saved);
   } catch (err) {
     console.error(err);
@@ -24,10 +16,7 @@ exports.savePost = async (req, res) => {
 
 exports.getSavedPosts = async (req, res) => {
   try {
-    console.log("GET /saved hit");
-
     const userId = await getUserIdOrFallback(req);
-    console.log("userId =", userId);
 
     const saved = await prisma.save.findMany({
       where: { userId },
@@ -40,24 +29,22 @@ exports.getSavedPosts = async (req, res) => {
                 steps: true,
               },
             },
+            creator: true,
+            saves: { where: { userId } },
+            likes: true,
           },
         },
       },
     });
 
-    console.log("saved count =", saved.length);
-
     const posts = saved
       .filter((s) => s.post)
-      .map((s) => toPostDto(s.post));
+      .map((s) => toPostDto(s.post, userId));
 
     res.json(posts);
   } catch (err) {
     console.error("GET /saved error:", err);
-    res.status(500).json({
-      error: "Failed to get saved posts",
-      details: err.message,
-    });
+    res.status(500).json({ error: "Failed to get saved posts", details: err.message });
   }
 };
 
@@ -65,14 +52,7 @@ exports.unsavePost = async (req, res) => {
   try {
     const postId = req.params.id;
     const userId = await getUserIdOrFallback(req);
-
-    await prisma.save.deleteMany({
-      where: {
-        postId,
-        userId,
-      },
-    });
-
+    await prisma.save.deleteMany({ where: { postId, userId } });
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to unsave post" });
