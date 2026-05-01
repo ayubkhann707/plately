@@ -7,14 +7,16 @@ datasource db {
 }
 
 model User {
-  id        String         @id @default(cuid())
-  email     String         @unique
-  password  String
-  createdAt DateTime       @default(now())
-  planItems MealPlanItem[]
-  posts     Post[]
-  saves     Save[]
-  likes     Like[]
+  id            String         @id @default(cuid())
+  email         String         @unique
+  password      String
+  createdAt     DateTime       @default(now())
+  planItems     MealPlanItem[]
+  posts         Post[]
+  saves         Save[]
+  likes         Like[]
+  pantryItems   PantryItem[]
+  groceryShares GroceryShare[]
 }
 
 model Post {
@@ -89,14 +91,35 @@ model Like {
 }
 
 model MealPlanItem {
-  id       String   @id @default(cuid())
-  userId   String
-  recipeId String
-  date     DateTime
-  mealType String   @default("Lunch")
-  recipe   Recipe   @relation(fields: [recipeId], references: [id])
-  user     User     @relation(fields: [userId], references: [id])
+  id              String   @id @default(cuid())
+  userId          String
+  recipeId        String
+  date            DateTime
+  mealType        String   @default("Lunch")
+  plannedServings Int?
+  recipe          Recipe   @relation(fields: [recipeId], references: [id])
+  user            User     @relation(fields: [userId], references: [id])
 
   @@index([userId, date])
   @@index([recipeId])
+}
+
+model PantryItem {
+  id     String @id @default(cuid())
+  userId String
+  name   String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model GroceryShare {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  data      Json
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([token])
 }

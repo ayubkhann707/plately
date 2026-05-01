@@ -11,6 +11,7 @@ const likeRoutes = require("./routes/like");
 const importsRoutes = require("./routes/imports");
 const planRoutes = require("./routes/plan");
 const groceryRoutes = require("./routes/grocery");
+const pantryRoutes = require("./routes/pantry");
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use("/", likeRoutes);
 app.use("/imports", importsRoutes);
 app.use("/plan", planRoutes);
 app.use("/grocery", groceryRoutes);
+app.use("/pantry", pantryRoutes);
 
 app.get("/health", (req, res) => res.json({ ok: true }));
 

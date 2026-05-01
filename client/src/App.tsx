@@ -12,12 +12,14 @@ import Grocery from "./pages/Grocery";
 import Profile from "./pages/Profile";
 import Post from "./pages/Post";
 import ImportRecipe from "./pages/ImportRecipe";
+import SharedGrocery from "./pages/SharedGrocery";
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/grocery/share/:token" element={<SharedGrocery />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
