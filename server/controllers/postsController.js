@@ -5,8 +5,10 @@ const { getUserIdOrFallback } = require("../services/userService");
 
 function getImageFromUrl(url) {
   if (!url) return null;
+
   const cleanUrl = String(url).trim();
   const lower = cleanUrl.toLowerCase().split("?")[0];
+
   if (
     lower.endsWith(".jpg") ||
     lower.endsWith(".jpeg") ||
@@ -16,21 +18,27 @@ function getImageFromUrl(url) {
   ) {
     return cleanUrl;
   }
+
   try {
     const parsed = new URL(cleanUrl);
     let videoId = "";
+
     if (parsed.hostname.includes("youtu.be")) {
       videoId = parsed.pathname.slice(1).split("?")[0];
     }
+
     if (parsed.hostname.includes("youtube.com")) {
       videoId = parsed.searchParams.get("v") || "";
+
       if (!videoId && parsed.pathname.includes("/shorts/")) {
         videoId = parsed.pathname.split("/shorts/")[1]?.split("/")[0] || "";
       }
+
       if (!videoId && parsed.pathname.includes("/embed/")) {
         videoId = parsed.pathname.split("/embed/")[1]?.split("/")[0] || "";
       }
     }
+
     return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
   } catch {
     return null;
@@ -39,7 +47,8 @@ function getImageFromUrl(url) {
 
 exports.getFeed = async (req, res) => {
   try {
-    const userId = await getUserIdOrFallback(req);
+    const userId = req.user?.userId || null;
+
     const posts = await prisma.post.findMany({
       where: { isPublic: true },
       include: {
@@ -50,11 +59,12 @@ exports.getFeed = async (req, res) => {
           },
         },
         creator: true,
-        saves: { where: { userId } },
+        saves: userId ? { where: { userId } } : false,
         likes: true,
       },
       orderBy: { createdAt: "desc" },
     });
+
     res.json(posts.map((post) => toPostDto(post, userId)));
   } catch (err) {
     console.error(err);
@@ -64,7 +74,8 @@ exports.getFeed = async (req, res) => {
 
 exports.getPostById = async (req, res) => {
   try {
-    const userId = await getUserIdOrFallback(req);
+    const userId = req.user?.userId || null;
+
     const post = await prisma.post.findUnique({
       where: { id: req.params.id },
       include: {
@@ -75,13 +86,15 @@ exports.getPostById = async (req, res) => {
           },
         },
         creator: true,
-        saves: { where: { userId } },
+        saves: userId ? { where: { userId } } : false,
         likes: true,
       },
     });
+
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
+
     res.json(toPostDto(post, userId));
   } catch (err) {
     console.error(err);
@@ -92,6 +105,7 @@ exports.getPostById = async (req, res) => {
 exports.createPost = async (req, res) => {
   try {
     const result = postSchema.safeParse(req.body);
+
     if (!result.success) {
       return res.status(400).json({
         error: result.error.issues
@@ -99,9 +113,21 @@ exports.createPost = async (req, res) => {
           .join(", "),
       });
     }
-    const { title, videoUrl, imageUrl, servings, timeMinutes, ingredients, steps, tags } = result.data;
+
+    const {
+      title,
+      videoUrl,
+      imageUrl,
+      servings,
+      timeMinutes,
+      ingredients,
+      steps,
+      tags,
+    } = result.data;
+
     const creatorId = await getUserIdOrFallback(req);
     const finalImageUrl = imageUrl || getImageFromUrl(videoUrl);
+
     const post = await prisma.post.create({
       data: {
         title,
@@ -115,7 +141,9 @@ exports.createPost = async (req, res) => {
             servings,
             timeMinutes,
             ingredients: { create: ingredients },
-            steps: { create: steps.map((text, i) => ({ order: i + 1, text })) },
+            steps: {
+              create: steps.map((text, i) => ({ order: i + 1, text })),
+            },
           },
         },
       },
@@ -130,6 +158,7 @@ exports.createPost = async (req, res) => {
         likes: true,
       },
     });
+
     res.status(201).json(toPostDto(post, creatorId));
   } catch (err) {
     console.error(err);
@@ -140,6 +169,7 @@ exports.createPost = async (req, res) => {
 exports.getMyPosts = async (req, res) => {
   try {
     const userId = await getUserIdOrFallback(req);
+
     const posts = await prisma.post.findMany({
       where: { creatorId: userId },
       include: {
@@ -155,6 +185,7 @@ exports.getMyPosts = async (req, res) => {
       },
       orderBy: { createdAt: "desc" },
     });
+
     res.json(posts.map((post) => toPostDto(post, userId)));
   } catch (err) {
     console.error(err);

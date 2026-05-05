@@ -1,86 +1,172 @@
 const prisma = require("../prismaClient");
 const { getUserIdOrFallback } = require("../services/userService");
 const { toBase, toDisplay } = require("../services/unitConversionService");
-const { normalizeAndCategorize } = require("../services/ingredientAIService");
 const { getPantry, isCoveredByPantry } = require("../services/pantryService");
 const { createShare, getShare } = require("../services/groceryShareService");
+
+const CATEGORY_ORDER = [
+  "Produce",
+  "Meat & Seafood",
+  "Dairy & Eggs",
+  "Bakery",
+  "Grains & Pasta",
+  "Canned & Jarred",
+  "Condiments & Sauces",
+  "Spices & Herbs",
+  "Baking",
+  "Oils & Vinegars",
+  "Frozen",
+  "Snacks",
+  "Beverages",
+  "Other",
+];
+
+const CATEGORY_KEYWORDS = {
+  Produce: ["tomato","onion","garlic","potato","carrot","pepper","lettuce","spinach","apple","banana","lemon","lime","broccoli","cucumber","zucchini","mushroom","avocado"],
+  "Meat & Seafood": ["chicken","beef","pork","salmon","tuna","shrimp","fish","meat"],
+  "Dairy & Eggs": ["milk","cheese","butter","yogurt","cream","egg"],
+  Bakery: ["bread","bun","bagel","tortilla","pita","naan"],
+  "Grains & Pasta": ["rice","pasta","noodle","quinoa","oats"],
+  "Canned & Jarred": ["canned","beans","lentils","tomato paste"],
+  "Condiments & Sauces": ["sauce","ketchup","mustard","mayo","pesto"],
+  "Spices & Herbs": ["salt","pepper","cumin","paprika","oregano"],
+  Baking: ["flour","sugar","baking powder","vanilla"],
+  "Oils & Vinegars": ["oil","olive oil","vinegar"],
+  Frozen: ["frozen"],
+  Snacks: ["chips","nuts","cookies"],
+  Beverages: ["water","juice","coffee","tea"],
+  Other: [],
+};
+
+function normalizeIngredientName(name) {
+  return String(name || "").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function categorizeIngredient(name) {
+  const normalized = normalizeIngredientName(name);
+
+  for (const category of CATEGORY_ORDER) {
+    const keywords = CATEGORY_KEYWORDS[category] || [];
+    for (const keyword of keywords) {
+      if (normalized.includes(keyword)) return category;
+    }
+  }
+
+  return "Other";
+}
+
+function sortItems(items) {
+  return items.sort((a, b) => {
+    const ca = CATEGORY_ORDER.indexOf(a.category);
+    const cb = CATEGORY_ORDER.indexOf(b.category);
+    if (ca !== cb) return ca - cb;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function round(val) {
+  return Math.round(Number(val || 0));
+}
 
 exports.getGroceryList = async (req, res) => {
   try {
     const userId = await getUserIdOrFallback(req);
-    const { from, to, ai } = req.query;
-    const skipAI = ai === "false";
+    const { from, to, planItemIds } = req.query;
+
+    const selectedIds = planItemIds
+      ? String(planItemIds).split(",").filter(Boolean)
+      : [];
 
     const planItems = await prisma.mealPlanItem.findMany({
       where: {
         userId,
-        ...(from || to ? {
-          date: {
-            gte: from ? new Date(from) : undefined,
-            lte: to ? new Date(`${to}T23:59:59.999Z`) : undefined,
-          },
-        } : {}),
+        ...(selectedIds.length
+          ? { id: { in: selectedIds } }
+          : from || to
+          ? {
+              date: {
+                gte: from ? new Date(from) : undefined,
+                lte: to ? new Date(`${to}T23:59:59.999Z`) : undefined,
+              },
+            }
+          : {}),
       },
-      include: { recipe: { include: { ingredients: true } } },
+      include: {
+        recipe: {
+          include: {
+            post: true,
+            ingredients: true,
+          },
+        },
+      },
     });
 
-    const map = {};
+    const pantry = await getPantry(userId);
+
+    const combinedMap = {};
+    const byRecipe = [];
+
     for (const item of planItems) {
       if (!item.recipe?.ingredients) continue;
-      const recipeServings = item.recipe.servings || 1;
-      const plannedServings = item.plannedServings || recipeServings;
-      const scaleFactor = plannedServings / recipeServings;
+
+      const recipeItems = [];
 
       for (const ing of item.recipe.ingredients) {
-        const scaledQty = ing.quantity != null ? ing.quantity * scaleFactor : null;
-        const { quantity: baseQty, unit: baseUnit } = toBase(scaledQty, ing.unit);
-        const key = `${ing.name.toLowerCase().trim()}-${baseUnit || ""}`;
-        if (!map[key]) {
-          map[key] = { rawName: ing.name, quantity: baseQty || 0, unit: baseUnit };
+        const { quantity: baseQty, unit: baseUnit } = toBase(ing.quantity, ing.unit);
+
+        const name = ing.name.trim();
+        const category = categorizeIngredient(name);
+        const key = `${name.toLowerCase()}-${baseUnit || ""}`;
+
+        if (!combinedMap[key]) {
+          combinedMap[key] = {
+            name,
+            quantity: baseQty || 0,
+            unit: baseUnit,
+            category,
+          };
         } else {
-          if (baseQty != null) map[key].quantity += baseQty;
+          combinedMap[key].quantity += baseQty || 0;
         }
+
+        const display = toDisplay(baseQty || 0, baseUnit);
+
+        recipeItems.push({
+          name,
+          quantity: ing.quantity || 0, // исходное
+          unit: ing.unit || null,
+          convertedQuantity: round(display.quantity), // округленное
+          convertedUnit: display.unit || null,
+          category,
+          inPantry: isCoveredByPantry(name, pantry),
+        });
       }
+
+      byRecipe.push({
+        planItemId: item.id,
+        recipeId: item.recipe.id,
+        recipeTitle: item.recipe.post?.title || "Recipe",
+        recipeImageUrl: item.recipe.post?.imageUrl || null,
+        items: sortItems(recipeItems),
+      });
     }
 
-    let aggregated = Object.values(map);
+    const byCategory = Object.values(combinedMap).map((item) => {
+      const display = toDisplay(item.quantity, item.unit);
 
-    const enriched = skipAI
-      ? aggregated.map((i) => ({ ...i, normalizedName: i.rawName, category: "Other" }))
-      : await normalizeAndCategorize(
-          aggregated.map((i) => ({ name: i.rawName, quantity: i.quantity, unit: i.unit }))
-        ).then((results) =>
-          results.map((r, idx) => ({ ...aggregated[idx], normalizedName: r.normalizedName, category: r.category }))
-        );
-
-    const mergedMap = {};
-    for (const item of enriched) {
-      const key = `${item.normalizedName.toLowerCase()}-${item.unit || ""}`;
-      if (!mergedMap[key]) mergedMap[key] = { ...item };
-      else mergedMap[key].quantity += item.quantity;
-    }
-
-    const pantry = await getPantry(userId);
-    const result = Object.values(mergedMap).map((item) => {
-      const { quantity, unit } = toDisplay(item.quantity, item.unit);
       return {
-        name: item.normalizedName,
-        quantity: quantity || 0,
-        unit: unit || null,
+        name: item.name,
+        quantity: round(display.quantity),
+        unit: display.unit || null,
         category: item.category,
-        inPantry: isCoveredByPantry(item.normalizedName, pantry),
+        inPantry: isCoveredByPantry(item.name, pantry),
       };
     });
 
-    const CATEGORY_ORDER = ["Produce", "Protein", "Dairy", "Pantry", "Spices", "Other"];
-    result.sort((a, b) => {
-      const ca = CATEGORY_ORDER.indexOf(a.category);
-      const cb = CATEGORY_ORDER.indexOf(b.category);
-      if (ca !== cb) return ca - cb;
-      return a.name.localeCompare(b.name);
+    res.json({
+      byCategory: sortItems(byCategory),
+      byRecipe,
     });
-
-    res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to generate grocery list" });
@@ -90,9 +176,15 @@ exports.getGroceryList = async (req, res) => {
 exports.shareGroceryList = async (req, res) => {
   try {
     const userId = await getUserIdOrFallback(req);
-    const { items } = req.body;
-    if (!Array.isArray(items)) return res.status(400).json({ error: "items array required" });
-    const token = await createShare(userId, items);
+    const { byCategory, byRecipe, checkedItems } = req.body;
+
+    const token = await createShare(userId, {
+      byCategory,
+      byRecipe,
+      checkedItems: checkedItems || [],
+      createdAt: new Date().toISOString(),
+    });
+
     const baseUrl = process.env.CORS_ORIGIN || "http://localhost:5173";
     res.json({ token, url: `${baseUrl}/grocery/share/${token}` });
   } catch (err) {
@@ -105,8 +197,10 @@ exports.getSharedGroceryList = async (req, res) => {
   try {
     const { token } = req.params;
     const share = await getShare(token);
+
     if (!share) return res.status(404).json({ error: "Not found" });
-    res.json({ items: share.data, createdAt: share.createdAt });
+
+    res.json(share.data);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch shared list" });

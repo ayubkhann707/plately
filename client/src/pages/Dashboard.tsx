@@ -795,6 +795,7 @@ function SearchIcon() {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
 
   const [weekStart, setWeekStart] = useState(() => getStartOfWeek(new Date()));
   const [planItems, setPlanItems] = useState<MealPlanItem[]>([]);
@@ -804,6 +805,12 @@ export default function Dashboard() {
 
   const weekData = useMemo(() => getWeekData(weekStart), [weekStart]);
   const weekLabel = useMemo(() => formatWeekLabel(weekStart), [weekStart]);
+
+  const weekEnd = useMemo(() => {
+    const end = new Date(weekStart);
+    end.setDate(weekStart.getDate() + 6);
+    return end;
+  }, [weekStart]);
 
   useEffect(() => {
     async function loadPlan() {
@@ -862,17 +869,13 @@ export default function Dashboard() {
       return;
     }
 
-    const existingIds = JSON.parse(
-      localStorage.getItem("groceryPlanItemIds") || "[]"
+    navigate(`/grocery?planItemIds=${selectedGroceryItemIds.join(",")}`);
+  }
+
+  function handleGenerateWeeklyGroceryList() {
+    navigate(
+      `/grocery?from=${formatDateForApi(weekStart)}&to=${formatDateForApi(weekEnd)}`
     );
-
-    const mergedIds = Array.from(
-      new Set([...existingIds, ...selectedGroceryItemIds])
-    );
-
-    localStorage.setItem("groceryPlanItemIds", JSON.stringify(mergedIds));
-
-    alert("Added to grocery list");
   }
 
   async function handleDeletePlanItem(itemId: string) {
@@ -933,7 +936,14 @@ export default function Dashboard() {
                   className="plan-primary-outline-btn"
                   onClick={handleGenerateGroceryList}
                 >
-                  Add to grocery list
+                  Add selected to grocery list
+                </button>
+
+                <button
+                  className="plan-primary-outline-btn"
+                  onClick={handleGenerateWeeklyGroceryList}
+                >
+                  Generate weekly grocery list
                 </button>
               </div>
             </div>

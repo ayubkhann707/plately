@@ -1,12 +1,29 @@
 const prisma = require("../prismaClient");
-const { getUserIdOrFallback } = require("../services/userService");
 
 exports.likePost = async (req, res) => {
   try {
     const postId = req.params.id;
-    const userId = await getUserIdOrFallback(req);
-    await prisma.like.create({ data: { userId, postId } });
-    res.json({ ok: true });
+    const userId = req.user.userId;
+
+    await prisma.like.upsert({
+      where: {
+        userId_postId: {
+          userId,
+          postId,
+        },
+      },
+      update: {},
+      create: {
+        userId,
+        postId,
+      },
+    });
+
+    const likeCount = await prisma.like.count({
+      where: { postId },
+    });
+
+    res.json({ ok: true, isLiked: true, likeCount });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to like post" });
@@ -16,10 +33,19 @@ exports.likePost = async (req, res) => {
 exports.unlikePost = async (req, res) => {
   try {
     const postId = req.params.id;
-    const userId = await getUserIdOrFallback(req);
-    await prisma.like.deleteMany({ where: { postId, userId } });
-    res.json({ ok: true });
+    const userId = req.user.userId;
+
+    await prisma.like.deleteMany({
+      where: { postId, userId },
+    });
+
+    const likeCount = await prisma.like.count({
+      where: { postId },
+    });
+
+    res.json({ ok: true, isLiked: false, likeCount });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Failed to unlike post" });
   }
 };
