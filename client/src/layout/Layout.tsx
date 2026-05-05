@@ -3,7 +3,6 @@ import {
   CalendarDays,
   BookOpen,
   UtensilsCrossed,
-  Heart,
   ShoppingCart,
   Settings,
   Leaf,
@@ -24,7 +23,16 @@ export default function Layout() {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
+  function getNavTo(to: string) {
+    if (to === "/grocery") {
+      return localStorage.getItem("grocery_last_url") || "/grocery";
+    }
+
+    return to;
+  }
+
   function handleLogout() {
+    localStorage.removeItem("grocery_last_url");
     logout();
     navigate("/login");
   }
@@ -44,10 +52,12 @@ export default function Layout() {
         <nav className="px-4 pt-4 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const navTo = getNavTo(item.to);
+
             return (
               <NavLink
                 key={item.label + item.to}
-                to={item.to}
+                to={navTo}
                 className={({ isActive }) =>
                   `w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-base font-medium transition-all ${
                     isActive

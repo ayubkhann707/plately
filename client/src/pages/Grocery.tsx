@@ -20,11 +20,6 @@ type RecipeGroup = {
   items: GroceryItem[];
 };
 
-type GrocerySnapshot = {
-  sourceKey: string;
-  items: GroceryItem[];
-  byRecipe: RecipeGroup[];
-};
 
 type Tab = "byCategory" | "byRecipe";
 
@@ -43,17 +38,22 @@ const CATEGORY_EMOJI: Record<string, string> = {
   Snacks: "🍿",
   Beverages: "🥤",
   Other: "🛒",
-
-  // Backward compatibility for old local snapshots
   Protein: "🥩",
   Dairy: "🧀",
   Pantry: "🥫",
   Spices: "🌿",
 };
 
-const SNAPSHOT_KEY = "grocery_snapshot_v2";
-const CHECKED_KEY = "grocery_checked";
-const MANUAL_KEY = "grocery_manual";
+function getStorageSuffix() {
+  return localStorage.getItem("token") || "anon";
+}
+
+function storageKey(key: string) {
+  return `${key}:${getStorageSuffix()}`;
+}
+
+const CHECKED_KEY = storageKey("grocery_checked");
+const MANUAL_KEY = storageKey("grocery_manual");
 
 function safeParse<T>(value: string | null, fallback: T): T {
   if (!value) return fallback;
@@ -65,25 +65,6 @@ function safeParse<T>(value: string | null, fallback: T): T {
   }
 }
 
-function getStartOfWeek(date: Date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function formatDateForApi(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function getSourceKey() {
-  return window.location.search || "current-week";
-}
 
 function itemKey(item: GroceryItem, prefix = "") {
   return `${prefix}${item.name}-${item.unit || "null"}`;
@@ -130,13 +111,16 @@ export default function Grocery() {
   const [items, setItems] = useState<GroceryItem[]>([]);
   const [byRecipe, setByRecipe] = useState<RecipeGroup[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [checkedItems, setCheckedItems] = useState<Set<string>>(() => {
     const saved = safeParse<string[]>(localStorage.getItem(CHECKED_KEY), []);
     return new Set(saved);
   });
+
   const [manualItems, setManualItems] = useState<GroceryItem[]>(() =>
     safeParse<GroceryItem[]>(localStorage.getItem(MANUAL_KEY), [])
   );
+
   const [activeTab, setActiveTab] = useState<Tab>("byCategory");
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
@@ -147,34 +131,25 @@ export default function Grocery() {
     setLoading(true);
 
     try {
-      const sourceKey = getSourceKey();
-      const savedSnapshot = safeParse<GrocerySnapshot | null>(
-        localStorage.getItem(SNAPSHOT_KEY),
-        null
-      );
-
-      if (savedSnapshot && savedSnapshot.sourceKey === sourceKey) {
-        setItems(savedSnapshot.items || []);
-        setByRecipe(savedSnapshot.byRecipe || []);
-        return;
-      }
-
       const params = new URLSearchParams(window.location.search);
       const planItemIds = params.get("planItemIds");
       const fromParam = params.get("from");
       const toParam = params.get("to");
 
+      if (!planItemIds && !fromParam && !toParam) {
+        setItems([]);
+        setByRecipe([]);
+        return;
+      }
+
       let url = "";
 
       if (planItemIds) {
         url = `/grocery?planItemIds=${encodeURIComponent(planItemIds)}`;
-      } else if (fromParam && toParam) {
-        url = `/grocery?from=${encodeURIComponent(fromParam)}&to=${encodeURIComponent(toParam)}`;
       } else {
-        const monday = getStartOfWeek(new Date());
-        const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
-        url = `/grocery?from=${formatDateForApi(monday)}&to=${formatDateForApi(sunday)}`;
+        url = `/grocery?from=${encodeURIComponent(fromParam || "")}&to=${encodeURIComponent(
+          toParam || ""
+        )}`;
       }
 
       const res = await api.get(url);
@@ -183,29 +158,13 @@ export default function Grocery() {
         setItems(res.data);
         setByRecipe([]);
 
-        localStorage.setItem(
-          SNAPSHOT_KEY,
-          JSON.stringify({
-            sourceKey,
-            items: res.data,
-            byRecipe: [],
-          })
-        );
       } else {
         const nextItems = res.data.byCategory || [];
         const nextByRecipe = res.data.byRecipe || [];
 
         setItems(nextItems);
         setByRecipe(nextByRecipe);
-
-        localStorage.setItem(
-          SNAPSHOT_KEY,
-          JSON.stringify({
-            sourceKey,
-            items: nextItems,
-            byRecipe: nextByRecipe,
-          })
-        );
+        
       }
     } catch (err) {
       console.error(err);
@@ -227,18 +186,6 @@ export default function Grocery() {
     localStorage.setItem(MANUAL_KEY, JSON.stringify(manualItems));
   }, [manualItems]);
 
-  useEffect(() => {
-    if (loading) return;
-
-    localStorage.setItem(
-      SNAPSHOT_KEY,
-      JSON.stringify({
-        sourceKey: getSourceKey(),
-        items,
-        byRecipe,
-      })
-    );
-  }, [items, byRecipe, loading]);
 
   const allItems = useMemo(() => {
     return [...items, ...manualItems];
@@ -399,7 +346,20 @@ export default function Grocery() {
       const removedGroup = prev.find((group) => group.planItemId === planItemId);
       const remainingGroups = prev.filter((group) => group.planItemId !== planItemId);
 
-      setItems(combineRecipeGroups(remainingGroups));
+      if (remainingGroups.length === 0) {
+        setItems([]);
+        localStorage.removeItem("grocery_last_url");
+        window.history.pushState(null, "", "/grocery");
+      } else {
+        setItems(combineRecipeGroups(remainingGroups));
+
+        const groceryUrl = `/grocery?planItemIds=${encodeURIComponent(
+          remainingGroups.map((group) => group.planItemId).join(",")
+        )}`;
+
+        localStorage.setItem("grocery_last_url", groceryUrl);
+        window.history.pushState(null, "", groceryUrl);
+      }
 
       if (removedGroup) {
         setCheckedItems((current) => {
@@ -432,7 +392,9 @@ export default function Grocery() {
       <div style={{ marginBottom: "20px" }}>
         <h1 style={{ margin: 0 }}>Grocery List</h1>
         <p style={{ color: "#64748b", marginTop: "6px", marginBottom: "14px" }}>
-          Loaded from your selected recipes · {shoppingItems.length} items
+          {shoppingItems.length > 0
+            ? `Loaded from your selected recipes · ${shoppingItems.length} items`
+            : "Please choose recipes from your weekly plan and add them to the grocery list."}
         </p>
 
         <div className="no-print" style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -573,7 +535,7 @@ export default function Grocery() {
             color: "#64748b",
           }}
         >
-          No items in your grocery list. Add recipes to your calendar or add items manually above.
+          Please choose recipes from your weekly plan and add them to the grocery list.
         </div>
       )}
 

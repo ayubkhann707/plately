@@ -863,19 +863,43 @@ export default function Dashboard() {
     );
   }
 
+  function clearGroceryCache() {
+    const token = localStorage.getItem("token") || "anon";
+
+    localStorage.removeItem("grocery_snapshot_v2");
+    localStorage.removeItem("grocery_checked");
+    localStorage.removeItem("grocery_manual");
+
+    localStorage.removeItem(`grocery_snapshot_v2:${token}`);
+    localStorage.removeItem(`grocery_checked:${token}`);
+    localStorage.removeItem(`grocery_manual:${token}`);
+  }
+
   function handleGenerateGroceryList() {
     if (selectedGroceryItemIds.length === 0) {
       alert("Please select at least one recipe from the calendar first");
       return;
     }
 
-    navigate(`/grocery?planItemIds=${selectedGroceryItemIds.join(",")}`);
+    clearGroceryCache();
+
+    const groceryUrl = `/grocery?planItemIds=${encodeURIComponent(
+      selectedGroceryItemIds.join(",")
+    )}`;
+
+    localStorage.setItem("grocery_last_url", groceryUrl);
+    navigate(groceryUrl);
   }
 
   function handleGenerateWeeklyGroceryList() {
-    navigate(
-      `/grocery?from=${formatDateForApi(weekStart)}&to=${formatDateForApi(weekEnd)}`
-    );
+    clearGroceryCache();
+
+    const groceryUrl = `/grocery?from=${formatDateForApi(
+      weekStart
+    )}&to=${formatDateForApi(weekEnd)}`;
+
+    localStorage.setItem("grocery_last_url", groceryUrl);
+    navigate(groceryUrl);
   }
 
   async function handleDeletePlanItem(itemId: string) {
