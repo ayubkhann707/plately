@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const settingsRoutes = require("./routes/settings");
 const morgan = require("morgan");
 require("dotenv").config();
@@ -17,8 +18,22 @@ const pantryRoutes = require("./routes/pantry");
 const app = express();
 
 app.use(morgan("dev"));
-app.use(cors({ origin: process.env.CORS_ORIGIN || "*" }));
+app.use(
+  cors({
+    origin: [
+      process.env.CLIENT_URL,
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://localhost:4173",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:4173",
+    ].filter(Boolean),
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
 
 app.use("/auth", authRoutes);
 app.use("/posts", postsRoutes);

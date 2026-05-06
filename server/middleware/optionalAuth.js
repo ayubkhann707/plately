@@ -1,16 +1,14 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = function optionalAuth(req, res, next) {
-  const header = req.headers.authorization;
+  const token = req.cookies.token || (req.headers.authorization && req.headers.authorization.split(" ")[1]);
 
-  if (!header) {
+  if (!token) {
     return next();
   }
 
-  const token = header.split(" ")[1];
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret");
     req.user = decoded;
   } catch {
     // invalid token, just continue without user

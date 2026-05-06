@@ -1,6 +1,7 @@
 import "./Dashboard.css";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 import RecipeCard from "../components/RecipeCard";
 import {
@@ -726,6 +727,7 @@ function SearchIcon() {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [weekStart, setWeekStart] = useState(() => getStartOfWeek(new Date()));
@@ -826,15 +828,15 @@ export default function Dashboard() {
   }
 
   function clearGroceryCache() {
-    const token = localStorage.getItem("token") || "anon";
+    const suffix = user?.id || "anon";
 
     localStorage.removeItem("grocery_snapshot_v2");
     localStorage.removeItem("grocery_checked");
     localStorage.removeItem("grocery_manual");
 
-    localStorage.removeItem(`grocery_snapshot_v2:${token}`);
-    localStorage.removeItem(`grocery_checked:${token}`);
-    localStorage.removeItem(`grocery_manual:${token}`);
+    localStorage.removeItem(`grocery_snapshot_v2:${suffix}`);
+    localStorage.removeItem(`grocery_checked:${suffix}`);
+    localStorage.removeItem(`grocery_manual:${suffix}`);
   }
 
   function handleGenerateGroceryList() {
