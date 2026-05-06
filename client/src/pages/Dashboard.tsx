@@ -2,9 +2,9 @@ import "./Dashboard.css";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client";
+import RecipeCard from "../components/RecipeCard";
 import {
   Bell,
-  Bookmark,
   ChefHat,
   ChevronDown,
   ChevronLeft,
@@ -17,41 +17,42 @@ import {
   MoreHorizontal,
   Plus,
   Share2,
-  Star,
-  Users,
   Wheat,
 } from "lucide-react";
 
 type MealType = "Breakfast" | "Lunch" | "Dinner";
 
-type FeedPost = {
-  id: number;
-  user: {
-    name: string;
-    handle: string;
-    avatar: string;
-  };
-  content: string;
+type DiscoverPost = {
+  id: string | number;
+  title?: string;
+  content?: string;
+  imageUrl?: string;
   image?: string;
-  recipe?: string;
-  likes: number;
-  comments: number;
-  timeAgo: string;
-  liked?: boolean;
-};
-
-type Recipe = {
-  id: number;
-  title: string;
-  image: string;
-  time: string;
-  servings: number;
-  rating: number;
-  reviews: number;
-  tags: string[];
-  calories: number;
-  saved?: boolean;
-  liked?: boolean;
+  tags?: string[];
+  likeCount?: number;
+  likes?: number;
+  commentCount?: number;
+  comments?: number;
+  isLiked?: boolean;
+  isSaved?: boolean;
+  createdAt?: string;
+  author?: {
+    name?: string;
+    username?: string;
+    avatarUrl?: string;
+  };
+  user?: {
+    name?: string;
+    handle?: string;
+    avatar?: string;
+  };
+  recipe?: {
+    timeMinutes?: number;
+    servings?: number;
+    ingredients?: {
+      name?: string;
+    }[];
+  };
 };
 
 type MealSlot = {
@@ -136,110 +137,25 @@ function getWeekData(weekStart: Date): DayPlan[] {
   });
 }
 
-const feedPosts: FeedPost[] = [
-  {
-    id: 1,
-    user: {
-      name: "Jamie Torres",
-      handle: "@jamiecooks",
-      avatar:
-        "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=60",
-    },
-    content:
-      "Made this incredible lemon tart last night — my family absolutely loved it!",
-    image:
-      "https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=300",
-    recipe: "Classic Lemon Tart",
-    likes: 142,
-    comments: 23,
-    timeAgo: "2h ago",
-    liked: true,
-  },
-  {
-    id: 2,
-    user: {
-      name: "Nora Kim",
-      handle: "@norakitchen",
-      avatar:
-        "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=60",
-    },
-    content:
-      "Week 3 of eating plant-based — feeling incredible. Here's what I had for dinner!",
-    image:
-      "https://images.pexels.com/photos/1640773/pexels-photo-1640773.jpeg?auto=compress&cs=tinysrgb&w=300",
-    likes: 98,
-    comments: 14,
-    timeAgo: "5h ago",
-  },
-  {
-    id: 3,
-    user: {
-      name: "Marco Delgado",
-      handle: "@marcorecipes",
-      avatar:
-        "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=60",
-    },
-    content:
-      "Just shared my grandmother's secret pasta recipe — took me 3 years to finally get it right.",
-    recipe: "Nonna's Sunday Pasta",
-    likes: 315,
-    comments: 47,
-    timeAgo: "1d ago",
-  },
-];
+function getRandomItems<T>(items: T[], count: number) {
+  return [...items].sort(() => Math.random() - 0.5).slice(0, count);
+}
 
-const recipes: Recipe[] = [
-  {
-    id: 1,
-    title: "Lemon Herb Roasted Chicken",
-    image:
-      "https://images.pexels.com/photos/2338407/pexels-photo-2338407.jpeg?auto=compress&cs=tinysrgb&w=400",
-    time: "55 min",
-    servings: 4,
-    rating: 4.8,
-    reviews: 234,
-    tags: ["High Protein", "Gluten-Free"],
-    calories: 420,
-    saved: true,
-  },
-  {
-    id: 2,
-    title: "Mango Coconut Chia Pudding",
-    image:
-      "https://images.pexels.com/photos/3625372/pexels-photo-3625372.jpeg?auto=compress&cs=tinysrgb&w=400",
-    time: "10 min",
-    servings: 2,
-    rating: 4.6,
-    reviews: 118,
-    tags: ["Vegan", "Breakfast"],
-    calories: 280,
-    liked: true,
-  },
-  {
-    id: 3,
-    title: "Mediterranean Veggie Wrap",
-    image:
-      "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400",
-    time: "20 min",
-    servings: 2,
-    rating: 4.4,
-    reviews: 87,
-    tags: ["Vegetarian", "Quick"],
-    calories: 350,
-  },
-  {
-    id: 4,
-    title: "Spiced Lentil Soup",
-    image:
-      "https://images.pexels.com/photos/539451/pexels-photo-539451.jpeg?auto=compress&cs=tinysrgb&w=400",
-    time: "40 min",
-    servings: 6,
-    rating: 4.7,
-    reviews: 195,
-    tags: ["Vegan", "High Fiber"],
-    calories: 310,
-  },
-];
+function getPostImage(post: DiscoverPost) {
+  return post.imageUrl || post.image || "";
+}
+
+function getPostTitle(post: DiscoverPost) {
+  return post.title || "Untitled recipe";
+}
+
+function getPostLikes(post: DiscoverPost) {
+  return post.likeCount ?? post.likes ?? 0;
+}
+
+function getPostComments(post: DiscoverPost) {
+  return post.commentCount ?? post.comments ?? 0;
+}
 
 function Header({ weekLabel }: { weekLabel: string }) {
   return (
@@ -631,90 +547,72 @@ function SlotRecipesModal({
   );
 }
 
-function RecipeCards() {
+function RecipeCards({
+  posts,
+  onToggleLike,
+  onToggleSave,
+}: {
+  posts: DiscoverPost[];
+  onToggleLike: (postId: string | number) => void;
+  onToggleSave: (postId: string | number) => void;
+}) {
+  const navigate = useNavigate();
+
   return (
     <div className="plan-section">
       <div className="plan-section__header">
         <div>
           <h2 className="plan-section__title">Suggested Recipes</h2>
-          <p className="plan-section__subtitle">Based on your preferences</p>
+          <p className="plan-section__subtitle">Random recipes from Discover</p>
         </div>
-        <button className="plan-link-btn">View all</button>
+        <button className="plan-link-btn" onClick={() => navigate("/feed")}>
+          View all
+        </button>
       </div>
 
       <div className="plan-recipes-grid">
-        {recipes.map((recipe) => (
-          <div key={recipe.id} className="plan-recipe-card">
-            <div className="plan-recipe-card__image-wrap">
-              <img
-                src={recipe.image}
-                alt={recipe.title}
-                className="plan-recipe-card__image"
-              />
-
-              <div className="plan-recipe-card__actions">
-                <button
-                  className={`plan-circle-btn ${recipe.liked ? "is-liked" : ""}`}
-                >
-                  <Heart size={13} fill={recipe.liked ? "currentColor" : "none"} />
-                </button>
-                <button
-                  className={`plan-circle-btn ${recipe.saved ? "is-saved" : ""}`}
-                >
-                  <Bookmark size={13} fill={recipe.saved ? "currentColor" : "none"} />
-                </button>
-              </div>
-
-              <div className="plan-recipe-card__tags">
-                {recipe.tags.map((tag) => (
-                  <span key={tag} className="plan-recipe-card__tag">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="plan-recipe-card__body">
-              <h3 className="plan-recipe-card__title">{recipe.title}</h3>
-
-              <div className="plan-recipe-card__rating">
-                <Star size={11} className="plan-star" />
-                <span className="plan-recipe-card__rating-value">{recipe.rating}</span>
-                <span className="plan-recipe-card__reviews">({recipe.reviews})</span>
-              </div>
-
-              <div className="plan-recipe-card__meta">
-                <span>
-                  <Clock size={12} /> {recipe.time}
-                </span>
-                <span>
-                  <Users size={12} /> {recipe.servings} servings
-                </span>
-                <span className="plan-recipe-card__kcal">{recipe.calories} kcal</span>
-              </div>
-            </div>
-          </div>
+        {posts.map((post) => (
+          <RecipeCard
+            key={post.id}
+            post={post}
+            onOpen={() => navigate(`/posts/${post.id}`)}
+            onToggleLike={onToggleLike}
+            onToggleSave={onToggleSave}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function FeedCard({ post }: { post: FeedPost }) {
+function FeedCard({
+  post,
+  onToggleLike,
+}: {
+  post: DiscoverPost;
+  onToggleLike: (postId: string | number) => void;
+}) {
+  const navigate = useNavigate();
+
+  const authorName = post.author?.name || post.user?.name || "Recipe creator";
+  const authorHandle = post.author?.username || post.user?.handle || "@discover";
+  const avatar =
+    post.author?.avatarUrl ||
+    post.user?.avatar ||
+    "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=60";
+  const image = getPostImage(post);
+  const title = getPostTitle(post);
+  const likes = getPostLikes(post);
+  const comments = getPostComments(post);
+
   return (
     <div className="plan-feed-card">
       <div className="plan-feed-card__top">
         <div className="plan-feed-card__user">
-          <img
-            src={post.user.avatar}
-            alt={post.user.name}
-            className="plan-feed-card__avatar"
-          />
+          <img src={avatar} alt={authorName} className="plan-feed-card__avatar" />
           <div>
-            <p className="plan-feed-card__name">{post.user.name}</p>
-            <p className="plan-feed-card__handle">
-              {post.user.handle} · {post.timeAgo}
-            </p>
+            <p className="plan-feed-card__name">{authorName}</p>
+            <p className="plan-feed-card__handle">{authorHandle}</p>
           </div>
         </div>
 
@@ -723,31 +621,32 @@ function FeedCard({ post }: { post: FeedPost }) {
         </button>
       </div>
 
-      <p className="plan-feed-card__content">{post.content}</p>
+      <p className="plan-feed-card__content">{post.content || title}</p>
 
-      {post.image ? (
+      {image ? (
         <div className="plan-feed-card__image-wrap">
-          <img src={post.image} alt="post" className="plan-feed-card__image" />
+          <img src={image} alt={title} className="plan-feed-card__image" />
         </div>
       ) : null}
 
-      {post.recipe ? (
-        <div className="plan-feed-card__recipe">
-          <div className="plan-feed-card__recipe-dot" />
-          <p>{post.recipe}</p>
-          <span>View recipe →</span>
-        </div>
-      ) : null}
+      <div className="plan-feed-card__recipe" onClick={() => navigate(`/posts/${post.id}`)}>
+        <div className="plan-feed-card__recipe-dot" />
+        <p>{title}</p>
+        <span>View recipe →</span>
+      </div>
 
       <div className="plan-feed-card__footer">
-        <button className={`plan-feed-card__action ${post.liked ? "is-liked" : ""}`}>
-          <Heart size={14} fill={post.liked ? "currentColor" : "none"} />
-          {post.likes}
+        <button
+          className={`plan-feed-card__action ${post.isLiked ? "is-liked" : ""}`}
+          onClick={() => onToggleLike(post.id)}
+        >
+          <Heart size={14} fill={post.isLiked ? "currentColor" : "none"} />
+          {likes}
         </button>
 
         <button className="plan-feed-card__action">
           <MessageCircle size={14} />
-          {post.comments}
+          {comments}
         </button>
 
         <button className="plan-feed-card__action plan-feed-card__share">
@@ -759,21 +658,33 @@ function FeedCard({ post }: { post: FeedPost }) {
   );
 }
 
-function CommunityFeed() {
+function CommunityFeed({
+  posts,
+  onToggleLike,
+}: {
+  posts: DiscoverPost[];
+  onToggleLike: (postId: string | number) => void;
+}) {
+  const navigate = useNavigate();
+
   return (
     <div className="plan-community">
       <div className="plan-community__header">
-        <h2 className="plan-section__title">Community</h2>
-        <button className="plan-link-btn">Explore</button>
+        <h2 className="plan-section__title">Most liked recipes</h2>
+        <button className="plan-link-btn" onClick={() => navigate("/feed")}>
+          Explore
+        </button>
       </div>
 
       <div className="plan-community__list">
-        {feedPosts.map((post) => (
-          <FeedCard key={post.id} post={post} />
+        {posts.map((post) => (
+          <FeedCard key={post.id} post={post} onToggleLike={onToggleLike} />
         ))}
       </div>
 
-      <button className="plan-community__load">Load more posts</button>
+      <button className="plan-community__load" onClick={() => navigate("/feed")}>
+        View more popular recipes
+      </button>
     </div>
   );
 }
@@ -799,12 +710,27 @@ export default function Dashboard() {
 
   const [weekStart, setWeekStart] = useState(() => getStartOfWeek(new Date()));
   const [planItems, setPlanItems] = useState<MealPlanItem[]>([]);
+  const [discoverPosts, setDiscoverPosts] = useState<DiscoverPost[]>([]);
+  const [suggestedRecipeIds, setSuggestedRecipeIds] = useState<(string | number)[]>([]);
   const [selectedSlotItems, setSelectedSlotItems] = useState<MealPlanItem[]>([]);
   const [selectedSlotTitle, setSelectedSlotTitle] = useState("");
   const [selectedGroceryItemIds, setSelectedGroceryItemIds] = useState<string[]>([]);
 
   const weekData = useMemo(() => getWeekData(weekStart), [weekStart]);
   const weekLabel = useMemo(() => formatWeekLabel(weekStart), [weekStart]);
+
+  const suggestedRecipes = useMemo(
+    () => discoverPosts.filter((post) => suggestedRecipeIds.includes(post.id)),
+    [discoverPosts, suggestedRecipeIds]
+  );
+
+  const mostLikedRecipes = useMemo(
+    () =>
+      [...discoverPosts]
+        .sort((a, b) => getPostLikes(b) - getPostLikes(a))
+        .slice(0, 3),
+    [discoverPosts]
+  );
 
   const weekEnd = useMemo(() => {
     const end = new Date(weekStart);
@@ -823,6 +749,22 @@ export default function Dashboard() {
     }
 
     loadPlan();
+  }, []);
+
+  useEffect(() => {
+    async function loadDiscoverPosts() {
+      try {
+        const res = await api.get("/posts/feed");
+        const posts = res.data as DiscoverPost[];
+
+        setDiscoverPosts(posts);
+        setSuggestedRecipeIds(getRandomItems(posts, 4).map((post) => post.id));
+      } catch (err) {
+        console.error("Failed to load Discover posts", err);
+      }
+    }
+
+    loadDiscoverPosts();
   }, []);
 
   function goToPreviousWeek() {
@@ -902,6 +844,54 @@ export default function Dashboard() {
     navigate(groceryUrl);
   }
 
+  async function handleToggleLike(postId: string | number) {
+    const post = discoverPosts.find((item) => item.id === postId);
+    if (!post) return;
+
+    try {
+      if (post.isLiked) {
+        await api.delete(`/posts/${postId}/like`);
+      } else {
+        await api.post(`/posts/${postId}/like`);
+      }
+
+      setDiscoverPosts((current) =>
+        current.map((item) =>
+          item.id === postId
+            ? {
+                ...item,
+                isLiked: !item.isLiked,
+                likeCount: getPostLikes(item) + (item.isLiked ? -1 : 1),
+              }
+            : item
+        )
+      );
+    } catch (err) {
+      console.error("Error toggling like", err);
+    }
+  }
+
+  async function handleToggleSave(postId: string | number) {
+    const post = discoverPosts.find((item) => item.id === postId);
+    if (!post) return;
+
+    try {
+      if (post.isSaved) {
+        await api.delete(`/posts/${postId}/save`);
+      } else {
+        await api.post(`/posts/${postId}/save`);
+      }
+
+      setDiscoverPosts((current) =>
+        current.map((item) =>
+          item.id === postId ? { ...item, isSaved: !item.isSaved } : item
+        )
+      );
+    } catch (err) {
+      console.error("Error toggling save", err);
+    }
+  }
+
   async function handleDeletePlanItem(itemId: string) {
     try {
       await api.delete(`/plan/${itemId}`);
@@ -979,10 +969,14 @@ export default function Dashboard() {
             />
           </div>
 
-          <RecipeCards />
+          <RecipeCards
+            posts={suggestedRecipes}
+            onToggleLike={handleToggleLike}
+            onToggleSave={handleToggleSave}
+          />
         </div>
 
-        <CommunityFeed />
+        <CommunityFeed posts={mostLikedRecipes} onToggleLike={handleToggleLike} />
       </div>
 
       {selectedSlotItems.length > 0 && (

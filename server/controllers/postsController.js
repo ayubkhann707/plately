@@ -47,7 +47,7 @@ function getImageFromUrl(url) {
 
 exports.getFeed = async (req, res) => {
   try {
-    const userId = req.user?.userId || null;
+    const userId = await getUserIdOrFallback(req);
 
     const posts = await prisma.post.findMany({
       where: { isPublic: true },
@@ -59,7 +59,7 @@ exports.getFeed = async (req, res) => {
           },
         },
         creator: true,
-        saves: userId ? { where: { userId } } : false,
+        saves: { where: { userId } },
         likes: true,
       },
       orderBy: { createdAt: "desc" },
@@ -74,7 +74,7 @@ exports.getFeed = async (req, res) => {
 
 exports.getPostById = async (req, res) => {
   try {
-    const userId = req.user?.userId || null;
+    const userId = await getUserIdOrFallback(req);
 
     const post = await prisma.post.findUnique({
       where: { id: req.params.id },
@@ -86,7 +86,7 @@ exports.getPostById = async (req, res) => {
           },
         },
         creator: true,
-        saves: userId ? { where: { userId } } : false,
+        saves: { where: { userId } },
         likes: true,
       },
     });

@@ -6,7 +6,21 @@ exports.savePost = async (req, res) => {
   try {
     const postId = req.params.id;
     const userId = await getUserIdOrFallback(req);
-    const saved = await prisma.save.create({ data: { userId, postId } });
+
+    const saved = await prisma.save.upsert({
+      where: {
+        userId_postId: {
+          userId,
+          postId,
+        },
+      },
+      update: {},
+      create: {
+        userId,
+        postId,
+      },
+    });
+
     res.json(saved);
   } catch (err) {
     console.error(err);

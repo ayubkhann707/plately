@@ -1,9 +1,10 @@
 const prisma = require("../prismaClient");
+const { getUserIdOrFallback } = require("../services/userService");
 
 exports.likePost = async (req, res) => {
   try {
     const postId = req.params.id;
-    const userId = req.user.userId;
+    const userId = await getUserIdOrFallback(req);
 
     await prisma.like.upsert({
       where: {
@@ -33,7 +34,7 @@ exports.likePost = async (req, res) => {
 exports.unlikePost = async (req, res) => {
   try {
     const postId = req.params.id;
-    const userId = req.user.userId;
+    const userId = await getUserIdOrFallback(req);
 
     await prisma.like.deleteMany({
       where: { postId, userId },
