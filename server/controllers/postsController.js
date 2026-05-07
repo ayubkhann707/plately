@@ -178,7 +178,10 @@ exports.getMyPosts = async (req, res) => {
     const userId = await getUserIdOrFallback(req);
 
     const posts = await prisma.post.findMany({
-      where: { creatorId: userId },
+      where: {
+        creatorId: userId,
+        isPublic: true,
+      },
       include: {
         recipe: {
           include: {

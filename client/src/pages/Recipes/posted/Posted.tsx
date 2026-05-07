@@ -4,11 +4,9 @@ import {
   Search,
   SlidersHorizontal,
   ChevronDown,
-  Download,
 } from "lucide-react";
 import api from "../../../api/client";
 import RecipeFilter, { type FilterState } from "../../../components/RecipeFilter";
-import ImportRecipeModal from "../../../components/ImportRecipeModal";
 import LibraryRecipeGrid, {
   type LibraryPost,
 } from "../../../components/LibraryRecipeGrid";
@@ -24,7 +22,6 @@ export default function Posted() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [showFilters, setShowFilters] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
 
   const [filters, setFilters] = useState<FilterState>({
     mealType: [],
@@ -282,14 +279,6 @@ export default function Posted() {
                 )}
               </div>
             </div>
-
-            <button
-              onClick={() => setShowImportModal(true)}
-              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm shadow-green-200"
-            >
-              <Download size={15} />
-              Import Recipe
-            </button>
           </div>
         </div>
       </header>
@@ -319,10 +308,6 @@ export default function Posted() {
           )}
         </div>
       </div>
-
-      {showImportModal && (
-        <ImportRecipeModal onClose={() => setShowImportModal(false)} />
-      )}
     </div>
   );
 }

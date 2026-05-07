@@ -4,6 +4,15 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+function cleanJsonResponse(text) {
+  return String(text || "")
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
+}
+
 async function validateRecipeTrust(recipeData, sourceText, metadata = {}) {
   const localWarnings = [];
 
@@ -81,7 +90,7 @@ ${String(sourceText || "").slice(0, 12000)}
     });
 
     const content = response.choices[0].message.content;
-    aiResult = JSON.parse(content);
+    aiResult = JSON.parse(cleanJsonResponse(content));
   } catch (err) {
     console.log("AI validation failed:", err.message);
   }

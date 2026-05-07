@@ -268,6 +268,20 @@ exports.saveImportedRecipe = async (req, res) => {
       },
     });
 
+    await prisma.save.upsert({
+      where: {
+        userId_postId: {
+          userId: finalCreatorId,
+          postId: createdPost.id,
+        },
+      },
+      update: {},
+      create: {
+        userId: finalCreatorId,
+        postId: createdPost.id,
+      },
+    });
+
     res.json({
       success: true,
       post: createdPost,
