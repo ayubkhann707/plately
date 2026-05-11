@@ -7,6 +7,13 @@ const {
 } = require("../services/importVideoService");
 const { getUserIdOrFallback } = require("../services/userService");
 const { validateRecipeTrust } = require("../services/recipeTrustService");
+const {
+  estimateMissingIngredientQuantities,
+} = require("../services/estimateQuantitiesService");
+const {
+  findSimilarRecipesOnline,
+  importRecipeFromSourceUrl,
+} = require("../services/similarRecipeSearchService");
 
 function getImageFromUrl(url) {
   if (!url) return null;
@@ -190,6 +197,129 @@ This is clearly a recipe video. Extract at least the likely ingredient names if 
 
     res.status(500).json({
       error: err.message || "Failed to preview recipe from video",
+    });
+  }
+};
+
+exports.findSimilarRecipes = async (req, res) => {
+  try {
+    const { videoUrl, caption } = req.body;
+
+    const platform = videoUrl ? detectPlatform(videoUrl) : "unknown";
+    let metadata = {
+      title: "",
+      description: "",
+      thumbnail: null,
+    };
+
+    if (videoUrl) {
+      metadata = await extractVideoMetadata(videoUrl);
+    }
+
+    const recipes = await findSimilarRecipesOnline({
+      title: metadata.title,
+      description: metadata.description,
+      caption,
+      videoUrl,
+      platform,
+    });
+
+    res.json({
+      success: true,
+      recipes,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message || "Failed to find similar recipes",
+    });
+  }
+};
+
+exports.importRecipeFromSource = async (req, res) => {
+  try {
+    const { selectedUrl, originalVideoUrl } = req.body;
+
+    if (!selectedUrl) {
+      return res.status(400).json({
+        error: "selectedUrl is required",
+      });
+    }
+
+    const importedRecipe = await importRecipeFromSourceUrl(selectedUrl);
+
+    const safeIngredients = sanitizeIngredients(importedRecipe.ingredients);
+    const safeSteps = sanitizeSteps(importedRecipe.steps);
+
+    if (safeIngredients.length === 0 || safeSteps.length === 0) {
+      return res.status(400).json({
+        error: "Could not extract enough recipe information from selected source",
+      });
+    }
+
+    const videoThumbnail = originalVideoUrl
+      ? getImageFromUrl(originalVideoUrl)
+      : null;
+
+    const previewRecipe = {
+      title: importedRecipe.title || "Imported Recipe",
+      videoUrl: originalVideoUrl || selectedUrl,
+      imageUrl: videoThumbnail || importedRecipe.imageUrl || getImageFromUrl(selectedUrl),
+      servings: parseMaybeNumber(importedRecipe.servings),
+      timeMinutes: parseMaybeNumber(importedRecipe.timeMinutes),
+      ingredients: safeIngredients,
+      steps: safeSteps.map((step) => step.text),
+    };
+
+    res.json({
+      success: true,
+      recipe: previewRecipe,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message || "Failed to import recipe from selected source",
+    });
+  }
+};
+
+exports.estimateMissingQuantities = async (req, res) => {
+  try {
+    const { recipe } = req.body;
+
+    if (!recipe || !Array.isArray(recipe.ingredients)) {
+      return res.status(400).json({
+        error: "Recipe with ingredients is required",
+      });
+    }
+
+    const missingIngredients = recipe.ingredients.filter(
+      (ingredient) => ingredient.quantity == null
+    );
+
+    if (missingIngredients.length === 0) {
+      return res.json({
+        success: true,
+        recipe,
+      });
+    }
+
+    const estimatedIngredients = await estimateMissingIngredientQuantities(recipe);
+
+    res.json({
+      success: true,
+      recipe: {
+        ...recipe,
+        ingredients: estimatedIngredients,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message || "Failed to estimate missing quantities",
     });
   }
 };
