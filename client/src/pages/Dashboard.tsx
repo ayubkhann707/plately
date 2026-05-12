@@ -5,21 +5,15 @@ import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 import RecipeCard from "../components/RecipeCard";
 import {
-  Bell,
-  ChefHat,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
-  Droplets,
-  Flame,
   Heart,
   MessageCircle,
   MoreHorizontal,
   Plus,
   Share2,
   ShoppingCart,
-  Wheat,
 } from "lucide-react";
 
 type MealType = "Breakfast" | "Lunch" | "Dinner";
@@ -175,87 +169,6 @@ function formatServingsLabel(servings: number) {
   return `${servings} ${servings === 1 ? "serving" : "servings"}`;
 }
 
-function Header({ weekLabel }: { weekLabel: string }) {
-  return (
-    <header className="plan-header">
-      <div className="plan-header__title-wrap">
-        <h1 className="plan-header__title">This Week&apos;s Plan</h1>
-        <p className="plan-header__subtitle">{weekLabel}</p>
-      </div>
-
-      <div className="plan-header__search">
-        <SearchIcon />
-        <input type="text" placeholder="Search recipes..." />
-      </div>
-
-      <button className="plan-icon-btn">
-        <Bell size={18} />
-        <span className="plan-notification-dot" />
-      </button>
-
-      <button className="plan-add-btn">
-        <Plus size={15} />
-        Add Meal
-      </button>
-
-      <button className="plan-view-btn">
-        Week view
-        <ChevronDown size={14} />
-      </button>
-    </header>
-  );
-}
-
-function TodaySummary() {
-  const stats = [
-    {
-      label: "Calories",
-      value: "1,840",
-      goal: "2,200",
-      icon: <Flame size={14} />,
-      cardClass: "orange",
-    },
-    {
-      label: "Protein",
-      value: "94g",
-      goal: "120g",
-      icon: <ChefHat size={14} />,
-      cardClass: "blue",
-    },
-    {
-      label: "Carbs",
-      value: "210g",
-      goal: "250g",
-      icon: <Wheat size={14} />,
-      cardClass: "amber",
-    },
-    {
-      label: "Water",
-      value: "1.8L",
-      goal: "2.5L",
-      icon: <Droplets size={14} />,
-      cardClass: "cyan",
-    },
-  ];
-
-  return (
-    <div className="plan-summary-grid">
-      {stats.map((stat) => (
-        <div key={stat.label} className="plan-summary-card">
-          <div className={`plan-summary-card__icon ${stat.cardClass}`}>
-            {stat.icon}
-          </div>
-          <div>
-            <p className="plan-summary-card__label">{stat.label}</p>
-            <p className="plan-summary-card__value">
-              {stat.value} <span>/ {stat.goal}</span>
-            </p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function MealCell({
   items,
@@ -808,22 +721,6 @@ function CommunityFeed({
   );
 }
 
-function SearchIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="plan-search-icon"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" />
-    </svg>
-  );
-}
-
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -945,10 +842,31 @@ export default function Dashboard() {
       return;
     }
 
-    clearGroceryCache();
+    const lastUrl = localStorage.getItem("grocery_last_url");
+    const existingIds: string[] = [];
+
+    if (lastUrl) {
+      const queryString = lastUrl.split("?")[1];
+
+      if (queryString) {
+        const params = new URLSearchParams(queryString);
+        const previousPlanItemIds = params.get("planItemIds");
+
+        if (previousPlanItemIds) {
+          existingIds.push(
+            ...previousPlanItemIds
+              .split(",")
+              .map((id) => id.trim())
+              .filter(Boolean)
+          );
+        }
+      }
+    }
+
+    const mergedIds = Array.from(new Set([...existingIds, ...ids]));
 
     const groceryUrl = `/grocery?planItemIds=${encodeURIComponent(
-      ids.join(",")
+      mergedIds.join(",")
     )}`;
 
     localStorage.setItem("grocery_last_url", groceryUrl);
@@ -1040,11 +958,16 @@ export default function Dashboard() {
 
   return (
     <div className="plan-main-shell">
-      <Header weekLabel={weekLabel} />
-
       <div className="plan-content">
         <div className="plan-main">
-          <TodaySummary />
+          <div className="plan-section">
+            <div className="plan-section__header">
+              <div>
+                <h1 className="plan-section__title">This Week&apos;s Plan</h1>
+                <p className="plan-section__subtitle">{weekLabel}</p>
+              </div>
+            </div>
+          </div>
 
           <div className="plan-section">
             <div className="plan-section__header">
