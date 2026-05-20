@@ -1,26 +1,15 @@
 const prisma = require("../prismaClient");
 const { toPostDto } = require("../dto/postDto");
-const { getUserIdOrFallback } = require("../services/userService");
 
 exports.savePost = async (req, res) => {
   try {
     const postId = req.params.id;
-    const userId = await getUserIdOrFallback(req);
-
+    const userId = req.user.userId;
     const saved = await prisma.save.upsert({
-      where: {
-        userId_postId: {
-          userId,
-          postId,
-        },
-      },
+      where: { userId_postId: { userId, postId } },
       update: {},
-      create: {
-        userId,
-        postId,
-      },
+      create: { userId, postId },
     });
-
     res.json(saved);
   } catch (err) {
     console.error(err);
@@ -30,19 +19,13 @@ exports.savePost = async (req, res) => {
 
 exports.getSavedPosts = async (req, res) => {
   try {
-    const userId = await getUserIdOrFallback(req);
-
+    const userId = req.user.userId;
     const saved = await prisma.save.findMany({
       where: { userId },
       include: {
         post: {
           include: {
-            recipe: {
-              include: {
-                ingredients: true,
-                steps: true,
-              },
-            },
+            recipe: { include: { ingredients: true, steps: true } },
             creator: true,
             saves: { where: { userId } },
             likes: true,
@@ -50,11 +33,7 @@ exports.getSavedPosts = async (req, res) => {
         },
       },
     });
-
-    const posts = saved
-      .filter((s) => s.post)
-      .map((s) => toPostDto(s.post, userId));
-
+    const posts = saved.filter((s) => s.post).map((s) => toPostDto(s.post, userId));
     res.json(posts);
   } catch (err) {
     console.error("GET /saved error:", err);
@@ -65,7 +44,7 @@ exports.getSavedPosts = async (req, res) => {
 exports.unsavePost = async (req, res) => {
   try {
     const postId = req.params.id;
-    const userId = await getUserIdOrFallback(req);
+    const userId = req.user.userId;
     await prisma.save.deleteMany({ where: { postId, userId } });
     res.json({ ok: true });
   } catch (err) {

@@ -5,7 +5,7 @@ const {
   extractVideoMetadata,
   extractRecipeWithAI,
 } = require("../services/importVideoService");
-const { getUserIdOrFallback } = require("../services/userService");
+
 const { validateRecipeTrust } = require("../services/recipeTrustService");
 const {
   estimateMissingIngredientQuantities,
@@ -363,7 +363,7 @@ exports.saveImportedRecipe = async (req, res) => {
       });
     }
 
-    const finalCreatorId = await getUserIdOrFallback(req);
+    const finalCreatorId = req.user.userId;
 
     const createdPost = await prisma.post.create({
       data: {

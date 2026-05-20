@@ -1,5 +1,5 @@
 const prisma = require("../prismaClient");
-const { getUserIdOrFallback } = require("../services/userService");
+
 const { toBase, toDisplay } = require("../services/unitConversionService");
 const { getPantry, isCoveredByPantry } = require("../services/pantryService");
 const { createShare, getShare } = require("../services/groceryShareService");
@@ -130,7 +130,7 @@ function getScaleFactor(planItem) {
 
 exports.getGroceryList = async (req, res) => {
   try {
-    const userId = await getUserIdOrFallback(req);
+    const userId = req.user.userId;
     const { from, to, planItemIds } = req.query;
 
     const selectedIds = planItemIds
@@ -286,7 +286,7 @@ exports.getGroceryList = async (req, res) => {
 
 exports.shareGroceryList = async (req, res) => {
   try {
-    const userId = await getUserIdOrFallback(req);
+    const userId = req.user.userId;
     const { byCategory, byRecipe, checkedItems } = req.body;
 
     const token = await createShare(userId, {

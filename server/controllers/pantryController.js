@@ -1,9 +1,8 @@
-const { getUserIdOrFallback } = require("../services/userService");
 const { getPantry, addPantryItem, removePantryItem } = require("../services/pantryService");
 
 exports.listPantry = async (req, res) => {
   try {
-    const userId = await getUserIdOrFallback(req);
+    const userId = req.user.userId;
     const items = await getPantry(userId);
     res.json(items);
   } catch (err) {
@@ -14,7 +13,7 @@ exports.listPantry = async (req, res) => {
 
 exports.addToPantry = async (req, res) => {
   try {
-    const userId = await getUserIdOrFallback(req);
+    const userId = req.user.userId;
     const { name } = req.body;
     if (!name) return res.status(400).json({ error: "name required" });
     const item = await addPantryItem(userId, name);
@@ -27,7 +26,7 @@ exports.addToPantry = async (req, res) => {
 
 exports.removeFromPantry = async (req, res) => {
   try {
-    const userId = await getUserIdOrFallback(req);
+    const userId = req.user.userId;
     await removePantryItem(userId, req.params.id);
     res.json({ ok: true });
   } catch (err) {
