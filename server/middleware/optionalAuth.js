@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = function optionalAuth(req, res, next) {
-  const token = req.cookies.token || (req.headers.authorization && req.headers.authorization.split(" ")[1]);
+  const token = req.cookies.token;
 
   if (!token) {
     return next();

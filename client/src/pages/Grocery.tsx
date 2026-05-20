@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import api from "../api/client";
+import { useAuth } from "../context/AuthContext";
 
 type GroceryItem = {
   name: string;
@@ -45,16 +46,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
   Spices: "🌿",
 };
 
-function getStorageSuffix() {
-  return localStorage.getItem("token") || "anon";
-}
 
-function storageKey(key: string) {
-  return `${key}:${getStorageSuffix()}`;
-}
-
-const CHECKED_KEY = storageKey("grocery_checked");
-const MANUAL_KEY = storageKey("grocery_manual");
 
 function safeParse<T>(value: string | null, fallback: T): T {
   if (!value) return fallback;
@@ -100,18 +92,27 @@ function btn(bg: string, color: string, border: string): CSSProperties {
 }
 
 export default function Grocery() {
+  const { user } = useAuth();
+  // User-specific localStorage keys so each account gets separate grocery state
+  const CHECKED_KEY = user ? `grocery_checked:${user.id}` : null;
+  const MANUAL_KEY = user ? `grocery_manual:${user.id}` : null;
+
   const [items, setItems] = useState<GroceryItem[]>([]);
   const [byRecipe, setByRecipe] = useState<RecipeGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [checkedItems, setCheckedItems] = useState<Set<string>>(() => {
-    const saved = safeParse<string[]>(localStorage.getItem(CHECKED_KEY), []);
-    return new Set(saved);
-  });
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [manualItems, setManualItems] = useState<GroceryItem[]>([]);
 
-  const [manualItems, setManualItems] = useState<GroceryItem[]>(() =>
-    safeParse<GroceryItem[]>(localStorage.getItem(MANUAL_KEY), [])
-  );
+  // Load persisted grocery state once user is known
+  useEffect(() => {
+    if (!CHECKED_KEY || !MANUAL_KEY) return;
+    const savedChecked = safeParse<string[]>(localStorage.getItem(CHECKED_KEY), []);
+    setCheckedItems(new Set(savedChecked));
+    const savedManual = safeParse<GroceryItem[]>(localStorage.getItem(MANUAL_KEY), []);
+    setManualItems(savedManual);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const [activeTab, setActiveTab] = useState<Tab>("byCategory");
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -162,12 +163,14 @@ export default function Grocery() {
   }, []);
 
   useEffect(() => {
+    if (!CHECKED_KEY) return;
     localStorage.setItem(CHECKED_KEY, JSON.stringify(Array.from(checkedItems)));
-  }, [checkedItems]);
+  }, [checkedItems, CHECKED_KEY]);
 
   useEffect(() => {
+    if (!MANUAL_KEY) return;
     localStorage.setItem(MANUAL_KEY, JSON.stringify(manualItems));
-  }, [manualItems]);
+  }, [manualItems, MANUAL_KEY]);
 
   const allItems = useMemo(() => {
     return [...items, ...manualItems];
