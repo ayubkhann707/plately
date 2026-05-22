@@ -217,6 +217,63 @@ npm test
 
 ---
 
+## Database
+
+The project uses PostgreSQL with Prisma ORM.
+
+### Database Files
+
+- `database/schema.sql` — generated SQL schema
+- `database/schema.dbml` — DBML database description
+- `database/queries.sql` — example SQL queries
+- `database/erd.png` — entity relationship diagram
+- `docs/database-description.md` — detailed database documentation
+
+### Main Entities
+
+- User
+- Post
+- Recipe
+- Ingredient
+- Step
+- Save
+- Like
+- MealPlanItem
+- PantryItem
+- GroceryShare
+
+### Supported Database Features
+
+The database supports:
+
+- recipe publishing,
+- recipe discovery,
+- likes and saves,
+- weekly meal planning,
+- pantry tracking,
+- grocery list generation,
+- grocery list sharing.
+
+### Performance Optimizations
+
+The schema includes:
+
+- indexed foreign keys,
+- composite indexes for meal planning,
+- unique constraints,
+- many-to-many junction tables,
+- normalized entity relationships.
+
+### Example Queries
+
+The project includes SQL queries demonstrating:
+
+1. Top liked recipes
+2. Most frequently planned meals
+3. Most commonly used ingredients
+
+---
+
 ## License
 
 To be defined.

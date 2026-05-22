@@ -1,0 +1,89 @@
+Table User {
+  id text [pk]
+  email text [unique]
+  password text
+  createdAt timestamp
+  nickname text
+  avatarUrl text
+  preferredUnits text
+}
+
+Table Post {
+  id text [pk]
+  title text
+  videoUrl text
+  imageUrl text
+  creatorId text
+  createdAt timestamp
+  isPublic boolean
+}
+
+Table Recipe {
+  id text [pk]
+  postId text [unique]
+  servings int
+  timeMinutes int
+}
+
+Table Ingredient {
+  id text [pk]
+  recipeId text
+  name text
+  quantity float
+  unit text
+}
+
+Table Step {
+  id text [pk]
+  recipeId text
+  order int
+  text text
+}
+
+Table Save {
+  userId text
+  postId text
+  createdAt timestamp
+}
+
+Table Like {
+  userId text
+  postId text
+  createdAt timestamp
+}
+
+Table MealPlanItem {
+  id text [pk]
+  userId text
+  recipeId text
+  date timestamp
+  mealType text
+  plannedServings int
+}
+
+Table PantryItem {
+  id text [pk]
+  userId text
+  name text
+}
+
+Table GroceryShare {
+  id text [pk]
+  userId text
+  token text [unique]
+  data json
+  createdAt timestamp
+}
+
+Ref: Post.creatorId > User.id
+Ref: Recipe.postId > Post.id
+Ref: Ingredient.recipeId > Recipe.id
+Ref: Step.recipeId > Recipe.id
+Ref: Save.userId > User.id
+Ref: Save.postId > Post.id
+Ref: Like.userId > User.id
+Ref: Like.postId > Post.id
+Ref: MealPlanItem.userId > User.id
+Ref: MealPlanItem.recipeId > Recipe.id
+Ref: PantryItem.userId > User.id
+Ref: GroceryShare.userId > User.id
