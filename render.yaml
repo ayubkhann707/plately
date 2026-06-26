@@ -20,7 +20,4 @@ services:
       - key: FDC_API_KEY
         sync: false
       - key: CORS_ORIGIN
-        fromService:
-          type: static
-          name: plately-client
-          property: url
+        sync: false
