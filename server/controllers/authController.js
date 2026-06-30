@@ -56,7 +56,8 @@ exports.register = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      domain: ".goplately.com",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.json({
@@ -122,7 +123,8 @@ exports.login = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      domain: ".goplately.com",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.json({
@@ -145,6 +147,7 @@ exports.logout = async (req, res) => {
     httpOnly: true,
     secure: true,
     sameSite: "none",
+    domain: ".goplately.com",
   });
   res.json({ message: "Logged out" });
 };
