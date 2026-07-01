@@ -1,4 +1,5 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   CalendarDays,
   BookOpen,
@@ -8,6 +9,8 @@ import {
   Leaf,
   SquarePen,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -22,6 +25,13 @@ const navItems = [
 export default function Layout() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Close sidebar when location changes
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location]);
 
   function getNavTo(to: string) {
     if (to === "/grocery") {
@@ -38,15 +48,56 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      <aside className="w-72 shrink-0 bg-white border-r border-gray-100 min-h-screen">
-        <div className="px-6 py-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-green-500 rounded-2xl flex items-center justify-center">
-            <Leaf size={18} className="text-white" />
+    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
+      {/* Mobile Header */}
+      <header className="lg:hidden bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between sticky top-0 z-30">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-green-500 rounded-xl flex items-center justify-center">
+            <Leaf size={14} className="text-white" />
           </div>
-          <span className="text-2xl font-semibold text-gray-900 tracking-tight">
+          <span className="text-xl font-semibold text-gray-900 tracking-tight">
             Plately
           </span>
+        </div>
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="p-2 text-gray-500 hover:bg-gray-50 rounded-xl transition-colors"
+        >
+          <Menu size={24} />
+        </button>
+      </header>
+
+      {/* Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-100 transition-transform duration-300 ease-in-out transform
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:translate-x-0 lg:static lg:inset-0 lg:min-h-screen shrink-0
+        `}
+      >
+        <div className="px-6 py-6 flex items-center justify-between lg:justify-start gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-500 rounded-2xl flex items-center justify-center">
+              <Leaf size={18} className="text-white" />
+            </div>
+            <span className="text-2xl font-semibold text-gray-900 tracking-tight">
+              Plately
+            </span>
+          </div>
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="lg:hidden p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-all"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         <nav className="px-4 pt-4 space-y-1">
@@ -99,7 +150,7 @@ export default function Layout() {
       </aside>
 
       <main className="flex-1 min-w-0">
-        <div className="w-full px-8 py-8">
+        <div className="w-full px-4 sm:px-8 py-6 sm:py-8">
           <Outlet />
         </div>
       </main>
