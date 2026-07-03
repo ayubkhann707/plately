@@ -31,7 +31,7 @@ export default function Library() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <button
-          onClick={() => navigate("/library/posted")}
+          onClick={() => navigate("/app/library/posted")}
           className="bg-white border border-gray-100 rounded-3xl p-8 text-left shadow-sm hover:shadow-md hover:border-green-200 transition-all"
         >
           <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mb-5">
@@ -48,7 +48,7 @@ export default function Library() {
         </button>
 
         <button
-          onClick={() => navigate("/library/saved")}
+          onClick={() => navigate("/app/library/saved")}
           className="bg-white border border-gray-100 rounded-3xl p-8 text-left shadow-sm hover:shadow-md hover:border-green-200 transition-all"
         >
           <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mb-5">

@@ -45,9 +45,9 @@ export default function ImportRecipeModal({ onClose }: ImportRecipeModalProps) {
     const trimmedUrl = urlInput.trim();
 
     if (trimmedUrl) {
-      navigate(`/import?url=${encodeURIComponent(trimmedUrl)}`);
+      navigate(`/app/import?url=${encodeURIComponent(trimmedUrl)}`);
     } else {
-      navigate("/import");
+      navigate("/app/import");
     }
 
     onClose();

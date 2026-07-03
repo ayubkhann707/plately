@@ -421,7 +421,7 @@ function SlotRecipesModal({
                 </label>
 
                 <button
-                  onClick={() => navigate(`/posts/${item.recipe.post.id}`)}
+                  onClick={() => navigate(`/app/posts/${item.recipe.post.id}`)}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -585,7 +585,7 @@ function RecipeCards({
           <h2 className="plan-section__title">Suggested Recipes</h2>
           <p className="plan-section__subtitle">Random recipes from Discover</p>
         </div>
-        <button className="plan-link-btn" onClick={() => navigate("/feed")}>
+        <button className="plan-link-btn" onClick={() => navigate("/app/feed")}>
           View all
         </button>
       </div>
@@ -595,7 +595,7 @@ function RecipeCards({
           <RecipeCard
             key={post.id}
             post={post}
-            onOpen={() => navigate(`/posts/${post.id}`)}
+            onOpen={() => navigate(`/app/posts/${post.id}`)}
             onToggleLike={onToggleLike}
             onToggleSave={onToggleSave}
           />
@@ -661,7 +661,7 @@ function FeedCard({
         </div>
       ) : null}
 
-      <div className="plan-feed-card__recipe" onClick={() => navigate(`/posts/${post.id}`)}>
+      <div className="plan-feed-card__recipe" onClick={() => navigate(`/app/posts/${post.id}`)}>
         <div className="plan-feed-card__recipe-dot" />
         <p>{title}</p>
         <span>View recipe →</span>
@@ -703,7 +703,7 @@ function CommunityFeed({
     <div className="plan-community">
       <div className="plan-community__header">
         <h2 className="plan-section__title">Most liked recipes</h2>
-        <button className="plan-link-btn" onClick={() => navigate("/feed")}>
+        <button className="plan-link-btn" onClick={() => navigate("/app/feed")}>
           Explore
         </button>
       </div>
@@ -714,7 +714,7 @@ function CommunityFeed({
         ))}
       </div>
 
-      <button className="plan-community__load" onClick={() => navigate("/feed")}>
+      <button className="plan-community__load" onClick={() => navigate("/app/feed")}>
         View more popular recipes
       </button>
     </div>
@@ -865,7 +865,7 @@ export default function Dashboard() {
 
     const mergedIds = Array.from(new Set([...existingIds, ...ids]));
 
-    const groceryUrl = `/grocery?planItemIds=${encodeURIComponent(
+    const groceryUrl = `/app/grocery?planItemIds=${encodeURIComponent(
       mergedIds.join(",")
     )}`;
 
@@ -876,7 +876,7 @@ export default function Dashboard() {
   function handleGenerateWeeklyGroceryList() {
     clearGroceryCache();
 
-    const groceryUrl = `/grocery?from=${formatDateForApi(
+    const groceryUrl = `/app/grocery?from=${formatDateForApi(
       weekStart
     )}&to=${formatDateForApi(weekEnd)}`;
 

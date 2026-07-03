@@ -300,7 +300,7 @@ export default function Posted() {
           ) : (
             <LibraryRecipeGrid
               posts={filteredPosts}
-              onOpen={(postId) => navigate(`/posts/${postId}`)}
+              onOpen={(postId) => navigate(`/app/posts/${postId}`)}
               onToggleSave={onToggleSave}
               onToggleLike={onToggleLike}
               onDeletePost={onDeletePost}

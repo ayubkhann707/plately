@@ -120,7 +120,7 @@ export default function CreatePost() {
     setSelectedTags([]);
     setError("");
 
-    navigate("/library");
+    navigate("/app/library");
   } catch (err: any) {
     console.error("Create post error:", err);
     setError(

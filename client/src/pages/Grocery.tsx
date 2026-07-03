@@ -314,9 +314,9 @@ export default function Grocery() {
       if (remainingPlanItemIds.length === 0) {
         setItems([]);
         localStorage.removeItem("grocery_last_url");
-        window.history.pushState(null, "", "/grocery");
+        window.history.pushState(null, "", "/app/grocery");
       } else {
-        const groceryUrl = `/grocery?planItemIds=${encodeURIComponent(
+        const groceryUrl = `/app/grocery?planItemIds=${encodeURIComponent(
           remainingPlanItemIds.join(",")
         )}`;
 

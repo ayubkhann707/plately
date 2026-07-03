@@ -186,7 +186,7 @@ export default function ImportRecipe() {
 
       await api.post("/imports/video/save", recipe);
 
-      navigate("/library/saved");
+      navigate("/app/library/saved");
     } catch (err: any) {
       console.log("SAVE IMPORT ERROR:", err);
       setError(err?.response?.data?.error || err?.message || "Save failed");

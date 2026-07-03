@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import {
   CalendarDays,
   BookOpen,
@@ -15,11 +15,11 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 const navItems = [
-  { to: "/", label: "Meal Plan", icon: CalendarDays },
-  { to: "/library", label: "Recipes", icon: BookOpen },
-  { to: "/feed", label: "Discover", icon: UtensilsCrossed },
-  { to: "/create", label: "Create Post", icon: SquarePen },
-  { to: "/grocery", label: "Grocery List", icon: ShoppingCart },
+  { to: "/app", label: "Meal Plan", icon: CalendarDays },
+  { to: "/app/library", label: "Recipes", icon: BookOpen },
+  { to: "/app/feed", label: "Discover", icon: UtensilsCrossed },
+  { to: "/app/create", label: "Create Post", icon: SquarePen },
+  { to: "/app/grocery", label: "Grocery List", icon: ShoppingCart },
 ];
 
 export default function Layout() {
@@ -34,8 +34,8 @@ export default function Layout() {
   }, [location]);
 
   function getNavTo(to: string) {
-    if (to === "/grocery") {
-      return localStorage.getItem("grocery_last_url") || "/grocery";
+    if (to === "/app/grocery") {
+      return localStorage.getItem("grocery_last_url") || "/app/grocery";
     }
 
     return to;
@@ -51,14 +51,14 @@ export default function Layout() {
     <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
       {/* Mobile Header */}
       <header className="lg:hidden bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between sticky top-0 z-30">
-        <div className="flex items-center gap-3">
+        <Link to="/app" className="flex items-center gap-3 no-underline">
           <div className="w-8 h-8 bg-green-500 rounded-xl flex items-center justify-center">
             <Leaf size={14} className="text-white" />
           </div>
           <span className="text-xl font-semibold text-gray-900 tracking-tight">
             Plately
           </span>
-        </div>
+        </Link>
         <button
           onClick={() => setIsSidebarOpen(true)}
           className="p-2 text-gray-500 hover:bg-gray-50 rounded-xl transition-colors"
@@ -84,14 +84,14 @@ export default function Layout() {
         `}
       >
         <div className="px-6 py-6 flex items-center justify-between lg:justify-start gap-3">
-          <div className="flex items-center gap-3">
+          <Link to="/app" className="flex items-center gap-3 no-underline">
             <div className="w-10 h-10 bg-green-500 rounded-2xl flex items-center justify-center">
               <Leaf size={18} className="text-white" />
             </div>
             <span className="text-2xl font-semibold text-gray-900 tracking-tight">
               Plately
             </span>
-          </div>
+          </Link>
           <button
             onClick={() => setIsSidebarOpen(false)}
             className="lg:hidden p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-all"
@@ -126,7 +126,7 @@ export default function Layout() {
 
         <div className="px-4 pt-6 pb-4 border-t border-gray-100 mt-4">
           <NavLink
-            to="/settings"
+            to="/app/settings"
             className={({ isActive }) =>
               `w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-base font-medium transition-all ${
                 isActive

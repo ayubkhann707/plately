@@ -162,7 +162,7 @@ export default function Feed() {
               <RecipeCard
                 key={post.id}
                 post={post}
-                onOpen={() => navigate(`/posts/${post.id}`)}
+                onOpen={() => navigate(`/app/posts/${post.id}`)}
                 onToggleSave={onToggleSave}
                 onToggleLike={onToggleLike}
               />
