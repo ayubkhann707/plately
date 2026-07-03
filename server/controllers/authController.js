@@ -4,6 +4,31 @@ const jwt = require("jsonwebtoken");
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
 
+// Cookie options adapt to environment:
+// - Production (deployed): strict cross-site settings so Safari works on goplately.com
+// - Local dev (localhost): relaxed settings so the cookie saves over http://localhost
+const isProduction = process.env.NODE_ENV === "production";
+
+function getCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: isProduction,                       // true in prod, false on localhost
+    sameSite: isProduction ? "none" : "lax",    // "none" cross-site in prod, "lax" locally
+    ...(isProduction && { domain: ".goplately.com" }), // domain ONLY in prod
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+}
+
+function getClearCookieOptions() {
+  // Must match the attributes used when setting the cookie (except maxAge)
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    ...(isProduction && { domain: ".goplately.com" }),
+  };
+}
+
 exports.register = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -52,13 +77,7 @@ exports.register = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      domain: ".goplately.com",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, getCookieOptions());
 
     res.json({
       user: {
@@ -119,13 +138,7 @@ exports.login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      domain: ".goplately.com",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, getCookieOptions());
 
     res.json({
       user: {
@@ -143,12 +156,7 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = async (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    domain: ".goplately.com",
-  });
+  res.clearCookie("token", getClearCookieOptions());
   res.json({ message: "Logged out" });
 };
 
