@@ -43,7 +43,7 @@ export default function Login() {
       }}>
         <div style={{ marginBottom: "32px" }}>
           <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 700, color: "#111827" }}>
-            Welcome back
+            Plan your meals
           </h1>
           <p style={{ margin: "8px 0 0", color: "#6b7280" }}>
             Log in to your Plately account
